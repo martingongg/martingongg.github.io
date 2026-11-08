@@ -3,257 +3,849 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<meta name="color-scheme" content="light"/>
-<link rel="icon" href="data:,"/>
-<title>Martin Gong — Hardware Engineer</title>
+<meta name="color-scheme" content="light dark"/>
+<meta name="description" content="Qijun 'Martin' Gong — Hardware &amp; VLSI Engineer at the University of Washington. CPU memory systems, MMU RTL, standard-cell VLSI layout, and 400V power electronics."/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23101214'/%3E%3Crect x='5' y='5' width='22' height='22' fill='none' stroke='%23b7f224' stroke-width='2.5'/%3E%3Crect x='11' y='11' width='10' height='10' fill='%234f7cff'/%3E%3C/svg%3E"/>
+<title>Martin Gong — Hardware &amp; VLSI Engineer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
   :root{
     --bg:#c7c9ca; --bg-deep:#a9abad; --panel:#d9dbdb;
-    --ink:#0c0c0c; --ink-soft:#2a2c2d; --muted:#54575a;
-    --line:rgba(12,12,12,.28); --line-soft:rgba(12,12,12,.16);
-    --dark:#101214; --dark-2:#1b1e22;
-    --lime:#b7f224; --signal:#ff4b1f; --trace-blue:#4f7cff; --trace-red:#ff5a4e; --trace-violet:#9a6bff;
+    --ink:#0c0c0c; --ink-soft:#2a2c2d; --muted:#505458;
+    --line:rgba(12,12,12,.28); --line-soft:rgba(12,12,12,.15);
+    --bar-grad:linear-gradient(to top,rgba(199,201,202,.96) 58%,rgba(199,201,202,0));
+    --dark:#0e1013; --dark-2:#171a1f; --dark-line:rgba(242,242,240,.14);
+    --lime:#b7f224; --signal:#ff4b1f;
+    --m1-blue:#4f7cff; --poly-red:#ff5a4e; --m4-violet:#9a6bff; --diff-green:#3ecf8e;
     --font:"Archivo",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
     --pixel:"Silkscreen",monospace;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --ease-out-expo:cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quint:cubic-bezier(0.22, 1, 0.36, 1);
   }
+  [data-theme="wafer"]{
+    --bg:#101215; --bg-deep:#090a0c; --panel:#181b20;
+    --ink:#eceeed; --ink-soft:#c5cacf; --muted:#8c939c;
+    --line:rgba(236,238,237,.24); --line-soft:rgba(236,238,237,.12);
+    --bar-grad:linear-gradient(to top,rgba(16,18,21,.96) 58%,rgba(16,18,21,0));
+  }
+
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  /* film grain over everything, like the reference */
-  body::after{content:"";position:fixed;inset:-50%;z-index:200;pointer-events:none;opacity:.55;mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");}
+  html{scroll-behavior:smooth;scroll-padding-top:24px}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font);font-size:16px;line-height:1.45;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    transition:background-color .45s var(--ease-out-expo),color .45s var(--ease-out-expo);
+  }
+  @media(pointer:fine){
+    body,a,button,input{cursor:none}
+  }
+
+  /* ---------- custom compositor-only cursor ---------- */
+  .cursor,.cursor-dot{
+    position:fixed;left:0;top:0;pointer-events:none;z-index:9999;
+    will-change:transform;
+  }
+  .cursor{
+    width:24px;height:24px;border:1.8px solid #fff;border-radius:50%;
+    mix-blend-mode:difference;
+    display:grid;place-items:center;
+    transition:width .32s var(--ease-out-expo),height .32s var(--ease-out-expo),border-radius .32s var(--ease-out-expo),background-color .25s,border-color .25s;
+  }
+  .cursor-label{
+    font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:#0c0c0c;opacity:0;white-space:nowrap;
+    transition:opacity .2s;
+  }
+  .cursor.hover{
+    width:64px;height:64px;background:var(--lime);border-color:var(--lime);
+    mix-blend-mode:normal;
+  }
+  .cursor.hover.has-label{
+    width:auto;min-width:74px;height:30px;padding:0 11px;border-radius:999px;
+  }
+  .cursor.hover.has-label .cursor-label{opacity:1}
+  .cursor.probe{
+    width:38px;height:38px;border-radius:3px;border-color:var(--lime);
+    background:rgba(183,242,36,.12);mix-blend-mode:normal;
+  }
+  .cursor-dot{
+    width:5px;height:5px;background:#fff;border-radius:50%;
+    z-index:10000;mix-blend-mode:difference;
+  }
+  @media(pointer:coarse){
+    .cursor,.cursor-dot{display:none!important}
+  }
+
+  /* ---------- tactile film grain ---------- */
+  body::after{
+    content:"";position:fixed;inset:-50%;z-index:200;pointer-events:none;opacity:.38;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='0.58'/%3E%3C/svg%3E");
+    animation:grain 9s steps(8) infinite;
+    @media (prefers-reduced-motion: reduce){
+      animation:none;
+    }
+  }
+  body.motion-paused::after{animation-play-state:paused}
+  @keyframes grain{
+    0%,100%{transform:translate3d(0,0,0)}
+    20%{transform:translate3d(-6%,4%,0)}
+    40%{transform:translate3d(5%,-8%,0)}
+    60%{transform:translate3d(-8%,6%,0)}
+    80%{transform:translate3d(4%,7%,0)}
+  }
+
   a{color:inherit;text-decoration:none}
   ::selection{background:var(--ink);color:var(--lime)}
-  button{font:inherit;cursor:pointer;color:inherit}
-  .px{font-family:var(--pixel);font-weight:400;letter-spacing:-.02em}
+  button{font:inherit;color:inherit;background:none;border:0;padding:0}
+  .px{font-family:var(--pixel);font-weight:400;letter-spacing:-.02em;display:inline-block;transition:color .2s,transform .25s var(--ease-out-expo)}
+  .px:hover{color:var(--signal);transform:translateY(-3px)}
   sup.reg{font-size:.18em;font-weight:700;vertical-align:super;letter-spacing:0}
-  /* ---------- fixed chrome ---------- */
-  .mark{position:fixed;top:18px;right:22px;z-index:120;width:44px;height:44px;color:var(--ink)}
+
+  /* ---------- VLSI boot curtain loader ---------- */
+  .page-loader{
+    position:fixed;inset:0;background:#0c0d10;color:#eceeed;z-index:600;
+    display:flex;flex-direction:column;justify-content:space-between;padding:22px 26px;
+    clip-path:inset(0 0 0 0);
+    transition:clip-path .95s var(--ease-out-expo),visibility .95s;
+    @media (prefers-reduced-motion: reduce){
+      display:none;
+    }
+  }
+  .page-loader.done{clip-path:inset(0 0 100% 0);visibility:hidden;pointer-events:none}
+  .loader-top,.loader-bot{
+    display:flex;justify-content:space-between;gap:16px;
+    font-family:var(--mono);font-size:12px;color:#8e959e;letter-spacing:.04em;text-transform:uppercase;
+  }
+  .loader-center{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .loader-text{
+    color:var(--lime);font-family:var(--pixel);font-size:clamp(18px,3.2vw,32px);
+    letter-spacing:.1em;overflow:hidden;text-align:center;
+  }
+  .loader-text span{display:inline-block;animation:loaderReveal .55s var(--ease-out-expo) both}
+  @keyframes loaderReveal{from{transform:translateY(110%);opacity:0}to{transform:translateY(0);opacity:1}}
+  .loader-bar{width:min(280px,70vw);height:3px;background:rgba(255,255,255,.12);overflow:hidden}
+  .loader-bar i{display:block;height:100%;background:var(--lime);transform-origin:left;animation:loaderFill .85s var(--ease-out-expo) both}
+  @keyframes loaderFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+  /* ---------- scroll progress indicator (native scroll-timeline + fallback) ---------- */
+  .scroll-progress{
+    position:fixed;top:0;left:0;width:100%;height:3px;
+    background:linear-gradient(90deg,var(--m1-blue),var(--lime),var(--poly-red));
+    z-index:350;transform-origin:0 50%;transform:scaleX(0);
+  }
+  @media (prefers-reduced-motion: no-preference){
+    @supports (animation-timeline: scroll()){
+      @keyframes grow-progress{
+        from{transform:scaleX(0)}
+        to{transform:scaleX(1)}
+      }
+      .scroll-progress{
+        animation:grow-progress auto linear;
+        animation-timeline:scroll(root block);
+      }
+    }
+  }
+
+  /* ---------- fixed chrome (top-left VLSI status, top-right MG mark, bottom bar) ---------- */
+  .topbar-util{
+    position:fixed;top:18px;left:22px;z-index:120;display:flex;align-items:center;gap:8px;
+    opacity:0;animation:fadeSlideDown .8s var(--ease-out-expo) .95s both;
+    @media (prefers-reduced-motion: reduce){opacity:1;animation:none}
+  }
+  .util-pill{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:5px 10px;border-radius:999px;
+    background:rgba(16,18,20,.82);color:#f2f2f0;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.14);
+    font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.02em;
+    transition:transform .25s var(--ease-out-expo),border-color .25s,background-color .25s;
+  }
+  .util-pill:hover{border-color:var(--lime);transform:translateY(-1px)}
+  .util-pill .sw{width:8px;height:8px;border-radius:50%;background:var(--lime)}
+  [data-theme="wafer"] .util-pill .sw{background:var(--m1-blue)}
+
+  .mark{
+    position:fixed;top:18px;right:22px;z-index:120;width:44px;height:44px;color:var(--ink);
+    opacity:0;animation:fadeSlideDown .8s var(--ease-out-expo) 1s both;
+    transition:transform .4s var(--ease-out-expo),color .3s;
+    @media (prefers-reduced-motion: reduce){opacity:1;animation:none}
+  }
+  .mark:hover{transform:rotate(90deg) scale(1.08)}
   .mark svg{width:100%;height:100%;display:block}
-  .bottombar{position:fixed;left:0;right:0;bottom:0;z-index:110;display:flex;align-items:flex-end;gap:18px;
-    padding:14px 22px 16px;background:linear-gradient(to top,rgba(199,201,202,.96) 55%,rgba(199,201,202,0));
-    font-weight:600;font-size:15px;line-height:1.25}
+  @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+
+  .bottombar{
+    position:fixed;left:0;right:0;bottom:0;z-index:110;
+    display:flex;align-items:flex-end;gap:18px;
+    padding:16px 22px 16px;background:var(--bar-grad);
+    font-weight:600;font-size:15px;line-height:1.25;
+    transform:translateY(100%);animation:slideUp .85s var(--ease-out-expo) 1.1s both;
+    @media (prefers-reduced-motion: reduce){transform:none;animation:none}
+  }
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
   .bottombar .who{display:flex;gap:9px;align-items:baseline;min-width:0}
   .bottombar .who .sq{flex:none;transform:translateY(-1px)}
-  .bottombar nav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
-  .bottombar nav a,.bottombar .contact-link{padding:2px 3px;border-bottom:2px solid transparent;white-space:nowrap}
-  .bottombar nav a:hover,.bottombar .contact-link:hover{border-bottom-color:var(--ink)}
+  .bottombar nav{
+    display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;
+    scroll-target-group:auto;
+  }
+  .bottombar nav a,.bottombar .contact-link{
+    position:relative;padding:2px 5px;border-bottom:2px solid transparent;
+    white-space:nowrap;transition:border-color .22s,color .22s,transform .22s var(--ease-out-expo);
+  }
+  .bottombar nav a:hover,.bottombar .contact-link:hover{border-bottom-color:var(--ink);transform:translateY(-1px)}
+  /* Scrollspy active state using :is() so older browsers don't drop the rule */
+  .bottombar nav a:is(:target-current, .target-current){
+    border-bottom-color:var(--ink);font-weight:800;
+  }
+  .bottombar nav a:is(:target-current, .target-current)::before{
+    content:"";display:inline-block;width:6px;height:6px;background:var(--lime);
+    border:1px solid var(--ink);margin-right:5px;vertical-align:middle;transform:translateY(-1px);
+  }
   .bottombar .contact-link{margin-left:auto}
-  @media(max-width:760px){
-    .bottombar{font-size:13px;padding:10px 14px 12px;gap:10px;flex-wrap:wrap}
+  @media(max-width:820px){
+    .bottombar{font-size:13px;padding:10px 14px 12px;gap:8px;flex-wrap:wrap}
     .bottombar .who span.role{display:none}
     .mark{width:34px;height:34px;top:12px;right:14px}
+    .topbar-util{top:12px;left:14px}
+    .topbar-util .hide-sm{display:none}
   }
+
   .sq{display:inline-block;width:.62em;height:.62em;background:var(--ink);flex:none}
-  .idx{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+  .idx{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:8px;margin:0}
   .idx .sq{width:11px;height:11px}
   main{display:block;padding-bottom:110px}
   .wrap{max-width:1560px;margin:0 auto;padding:0 22px}
   @media(max-width:760px){.wrap{padding:0 14px}}
-  /* ---------- hero ---------- */
-  .hero{position:relative;padding-top:26px;min-height:100svh;display:flex;flex-direction:column}
-  .hero-type{position:relative;z-index:3;text-transform:uppercase;font-weight:900;line-height:.8;letter-spacing:-.035em;user-select:none}
-  .hero-type .l1{font-size:clamp(64px,16.5vw,264px);text-align:right;white-space:nowrap;margin-right:-.04em}
-  .hero-type .l2{font-size:clamp(64px,16.5vw,264px);white-space:nowrap;margin-top:.06em;position:relative;z-index:4}
-  .hero-type .px{font-size:.92em;vertical-align:-.02em}
-  .hero-media{position:relative;z-index:2;margin:-4.5vw 0 0 auto;width:min(880px,62vw);aspect-ratio:16/9.4;background:var(--dark);overflow:hidden}
-  .hero-media svg{width:100%;height:100%;display:block}
-  @media(max-width:760px){
-    .hero{min-height:0;padding-top:16px}
-    .hero-media{width:100%;margin-top:10px;aspect-ratio:4/3}
-    .hero-type .l2{margin-top:8px}
+
+  /* ---------- scroll reveal choreography ---------- */
+  .reveal{opacity:0;transform:translate3d(0,36px,0);transition:opacity .85s var(--ease-out-expo),transform .85s var(--ease-out-expo)}
+  .reveal.in{opacity:1;transform:translate3d(0,0,0)}
+  .reveal-scale{opacity:0;transform:scale(.94);transition:opacity .9s var(--ease-out-expo),transform .9s var(--ease-out-expo)}
+  .reveal-scale.in{opacity:1;transform:scale(1)}
+  [data-delay="1"]{transition-delay:.08s}
+  [data-delay="2"]{transition-delay:.16s}
+  [data-delay="3"]{transition-delay:.24s}
+  [data-delay="4"]{transition-delay:.32s}
+  @media (prefers-reduced-motion: reduce){
+    .reveal,.reveal-scale{opacity:1;transform:none;transition:none}
   }
-  .hero-lower{display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-top:44px;align-items:start}
-  @media(max-width:760px){.hero-lower{grid-template-columns:1fr;margin-top:30px}}
-  .hero-intro{font-size:clamp(19px,2vw,27px);font-weight:600;line-height:1.32;max-width:34ch;margin:0}
-  .hero-meta{display:flex;gap:10px 34px;flex-wrap:wrap;margin-top:30px;padding-top:16px;border-top:1px solid var(--line);
-    font-family:var(--mono);font-size:13px;color:var(--ink-soft)}
+
+  /* ---------- HERO (Macmillan editorial lockup + VLSI CPU Die) ---------- */
+  .hero{
+    position:relative;padding-top:58px;min-height:100svh;
+    display:flex;flex-direction:column;overflow:clip;
+  }
+  .hero-lockup{position:relative}
+  .hero-type{
+    position:relative;z-index:4;text-transform:uppercase;font-weight:900;
+    line-height:.8;letter-spacing:-.038em;user-select:none;pointer-events:none;
+  }
+  .hero-type .px{pointer-events:auto;font-size:.92em;vertical-align:-.02em}
+  .hero-type .l1{
+    font-size:clamp(62px,16.2vw,258px);text-align:right;white-space:nowrap;margin-right:-.035em;
+    clip-path:inset(0 100% 0 0);animation:heroTypeReveal 1.15s var(--ease-out-expo) .95s both;
+    @media (prefers-reduced-motion: reduce){clip-path:none;animation:none}
+  }
+  .hero-type .l2{
+    font-size:clamp(62px,16.2vw,258px);white-space:nowrap;margin-top:.04em;position:relative;z-index:5;
+    clip-path:inset(0 100% 0 0);animation:heroTypeReveal 1.15s var(--ease-out-expo) 1.25s both;
+    @media (prefers-reduced-motion: reduce){clip-path:none;animation:none}
+  }
+  @keyframes heroTypeReveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+
+  /* Native CSS Scroll-Driven Parallax on Hero Layers */
+  @media (prefers-reduced-motion: no-preference){
+    @supports ((animation-timeline: view()) and (animation-range: entry)){
+      .hero-lockup{view-timeline:--hero-view block}
+      @keyframes heroL1Shift{from{translate:0 0}to{translate:-28px -34px}}
+      @keyframes heroL2Shift{from{translate:0 0}to{translate:32px -18px}}
+      @keyframes heroDieShift{from{translate:0 0}to{translate:0 26px}}
+      .hero-type .l1{animation:heroTypeReveal 1.15s var(--ease-out-expo) .95s both, heroL1Shift linear both;animation-timeline:auto, --hero-view;animation-range:normal, exit 0% exit 100%}
+      .hero-type .l2{animation:heroTypeReveal 1.15s var(--ease-out-expo) 1.25s both, heroL2Shift linear both;animation-timeline:auto, --hero-view;animation-range:normal, exit 0% exit 100%}
+      .hero-media-parallax{animation:heroDieShift linear both;animation-timeline:--hero-view;animation-range:exit 0% exit 100%}
+    }
+  }
+
+  .hero-media{
+    position:relative;z-index:3;margin:-4.2vw 0 -3.2vw auto;
+    width:min(940px,65vw);aspect-ratio:1376/768;
+    background:var(--dark);border:1.5px solid rgba(12,12,12,.65);
+    box-shadow:0 28px 70px rgba(0,0,0,.28);
+    overflow:hidden;perspective:1100px;
+    opacity:0;transform:scale(.96);animation:heroMediaReveal 1s var(--ease-out-expo) 1.08s both;
+    @media (prefers-reduced-motion: reduce){opacity:1;transform:none;animation:none}
+  }
+  [data-theme="wafer"] .hero-media{border-color:rgba(255,255,255,.2);box-shadow:0 30px 80px rgba(0,0,0,.65)}
+  @keyframes heroMediaReveal{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+
+  .hero-media-inner{
+    position:relative;width:100%;height:100%;
+    transform-style:preserve-3d;
+    transition:transform .18s ease-out;will-change:transform;
+  }
+  .hero-die-img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    filter:contrast(1.06) saturate(1.08);
+    transition:opacity .35s ease,filter .45s ease,transform .6s var(--ease-out-expo);
+  }
+  .hero-media[data-layer="traces"] .hero-die-img{filter:brightness(.36) contrast(1.2) saturate(.7)}
+  .hero-media[data-layer="floorplan"] .hero-die-img{filter:brightness(.55) contrast(1.12)}
+  .hero-media[data-layer="raw"] .vlsi-hud{opacity:0;pointer-events:none}
+
+  .vlsi-hud{
+    position:absolute;inset:0;width:100%;height:100%;display:block;
+    transition:opacity .35s ease;
+  }
+  /* VLSI HUD Macro Blocks & Signal Traces */
+  .vlsi-block{
+    cursor:none;transition:opacity .25s ease;
+  }
+  .vlsi-block rect.blk-fill{
+    fill:rgba(183,242,36,0);stroke:rgba(242,242,240,.35);stroke-width:1.4;
+    stroke-dasharray:6 4;transition:fill .25s,stroke .25s,stroke-width .25s;
+  }
+  .hero-media[data-layer="traces"] .vlsi-block rect.blk-fill{opacity:.25}
+  .vlsi-block:hover rect.blk-fill,.vlsi-block.active rect.blk-fill{
+    fill:rgba(183,242,36,.11);stroke:var(--lime);stroke-width:2.2;stroke-dasharray:none;
+  }
+  .vlsi-block .blk-tag{
+    font-family:var(--mono);font-size:13px;font-weight:700;fill:#f2f2f0;
+    letter-spacing:.04em;paint-order:stroke;stroke:#0e1013;stroke-width:4px;stroke-linejoin:round;
+  }
+  .vlsi-block:hover .blk-tag,.vlsi-block.active .blk-tag{fill:var(--lime)}
+
+  .vlsi-bus{
+    fill:none;stroke-width:2.6;stroke-linecap:square;stroke-linejoin:miter;
+    stroke-dasharray:1400;stroke-dashoffset:1400;
+    animation:busRoute 2.2s var(--ease-out-expo) 1.5s forwards;
+    @media (prefers-reduced-motion: reduce){stroke-dashoffset:0;animation:none}
+  }
+  .vlsi-bus.b2{animation-delay:1.68s}
+  .vlsi-bus.b3{animation-delay:1.84s}
+  .vlsi-bus.b4{animation-delay:2.0s}
+  @keyframes busRoute{to{stroke-dashoffset:0}}
+  .hero-media[data-layer="floorplan"] .vlsi-traces-layer{opacity:.25}
+
+  /* CAD Toolbar & Telemetry Bar inside Hero Die */
+  .die-toolbar{
+    position:absolute;top:10px;left:10px;right:10px;z-index:6;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
+    pointer-events:none;
+  }
+  .die-modes{
+    display:inline-flex;gap:3px;padding:3px;border-radius:6px;
+    background:rgba(10,12,15,.84);border:1px solid rgba(255,255,255,.15);
+    backdrop-filter:blur(8px);pointer-events:auto;
+  }
+  .die-mode-btn{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    color:#b5bbc2;padding:4px 8px;border-radius:4px;text-transform:uppercase;
+    transition:background .2s,color .2s;
+  }
+  .die-mode-btn:hover{color:#fff}
+  .die-mode-btn.active{background:var(--lime);color:#0c0c0c}
+  .die-coords{
+    font-family:var(--mono);font-size:11px;font-weight:600;color:#d6dade;
+    padding:4px 9px;border-radius:5px;background:rgba(10,12,15,.82);
+    border:1px solid rgba(255,255,255,.13);letter-spacing:.03em;
+  }
+
+  .die-status{
+    position:absolute;left:10px;right:10px;bottom:10px;z-index:6;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:6px 11px;border-radius:6px;
+    background:rgba(10,12,15,.86);border:1px solid rgba(255,255,255,.14);
+    backdrop-filter:blur(8px);
+    font-family:var(--mono);font-size:11.5px;color:#cfd4da;pointer-events:none;
+  }
+  .die-status b{color:var(--lime);font-weight:700}
+  .die-status .right{color:var(--lime);font-weight:700;white-space:nowrap}
+
+  @media(max-width:760px){
+    .hero{min-height:0;padding-top:52px}
+    .hero-media{width:100%;margin:10px 0 6px}
+    .die-coords{display:none}
+    .die-status{font-size:10px;padding:5px 8px}
+  }
+
+  .hero-lower{display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-top:42px;align-items:start}
+  @media(max-width:760px){.hero-lower{grid-template-columns:1fr;margin-top:26px}}
+  .hero-intro{font-size:clamp(19px,2vw,27px);font-weight:600;line-height:1.32;max-width:36ch;margin:0}
+  .hero-meta{
+    display:flex;gap:10px 34px;flex-wrap:wrap;margin-top:28px;padding-top:16px;
+    border-top:1px solid var(--line);font-family:var(--mono);font-size:13px;color:var(--ink-soft);
+  }
   .hero-meta b{font-weight:700;color:var(--ink)}
   .avail{display:inline-flex;align-items:center;gap:8px}
-  .avail i{width:9px;height:9px;background:var(--lime);border:1.5px solid var(--ink);display:block;flex:none}
+  .avail i{
+    width:9px;height:9px;background:var(--lime);border:1.5px solid var(--ink);display:block;flex:none;
+    animation:pulse 2.2s ease-in-out infinite;
+    @media (prefers-reduced-motion: reduce){animation:none}
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(1.28)}}
+
+  /* ---------- velocity-reactive marquee ---------- */
+  .marquee{
+    position:relative;overflow:hidden;white-space:nowrap;
+    border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+    padding:14px 0;margin-top:62px;
+  }
+  .marquee-track{
+    display:inline-flex;will-change:transform;
+    animation:marqueeScroll 28s linear infinite;
+    @media (prefers-reduced-motion: reduce){animation:none}
+  }
+  .marquee:hover .marquee-track,body.motion-paused .marquee-track{animation-play-state:paused}
+  .marquee-track span{
+    font-weight:900;font-size:clamp(17px,2.2vw,27px);
+    text-transform:uppercase;letter-spacing:.04em;padding:0 24px;color:var(--ink);
+  }
+  .marquee-track .dot{color:var(--signal);padding:0;font-size:.95em}
+  [data-theme="wafer"] .marquee-track .dot{color:var(--lime)}
+  @keyframes marqueeScroll{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+
   /* ---------- section scaffolding ---------- */
-  section{padding-top:110px}
+  section{padding-top:112px}
   @media(max-width:760px){section{padding-top:76px}}
   .sec-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
-  .sec-mid{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:56px 0 40px;flex-wrap:wrap}
-  .sec-label{font-size:clamp(19px,2vw,26px);font-weight:700;display:flex;align-items:center;gap:11px}
+  .sec-mid{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:52px 0 38px;flex-wrap:wrap}
+  .sec-label{font-size:clamp(19px,2vw,26px);font-weight:700;display:flex;align-items:center;gap:11px;margin:0}
   .sec-label .sq{width:13px;height:13px}
   .sec-label sup,.sec-count sup{font-size:.55em;font-weight:600;vertical-align:super}
-  .sec-count{font-size:clamp(19px,2vw,26px);font-weight:500}
-  .sec-count:hover{text-decoration:underline;text-underline-offset:5px}
-  /* ---------- featured project card ---------- */
-  .featured{width:min(430px,88vw);margin:6px auto 0;background:var(--dark);color:#f2f2f0;aspect-ratio:3/4.05;
-    display:flex;flex-direction:column;overflow:hidden;border-radius:14px;position:relative}
-  .featured .f-head{display:flex;align-items:center;gap:9px;padding:16px 18px;font-weight:700;font-size:15px}
-  .featured .f-chip{width:27px;height:27px;border-radius:50%;background:var(--signal);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;flex:none}
-  .featured .f-art{flex:1;position:relative;margin:0 18px;background:var(--dark-2);overflow:hidden}
-  .featured .f-art svg{width:100%;height:100%;display:block}
-  .badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:88px;height:88px;border-radius:50%;
-    background:#000;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
-  .badge span{font-family:var(--pixel);color:var(--lime);font-size:30px;line-height:.8;letter-spacing:2px}
-  .featured .f-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:16px 18px 18px}
-  .featured .f-foot .t{font-weight:800;font-size:19px;line-height:1.15;text-transform:uppercase;letter-spacing:-.01em}
-  .featured .f-foot .s{font-family:var(--mono);font-size:12px;color:#b9bdc2;text-align:right}
-  .featured:hover .f-art svg{transform:scale(1.03)}
-  .featured .f-art svg{transition:transform .5s ease}
-  @media (prefers-reduced-motion: reduce){.featured .f-art svg{transition:none}}
-  .featured-cap{text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:16px auto 0;max-width:52ch}
-  /* ---------- project index ---------- */
-  .proj-tools{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:74px 0 8px}
+  .sec-count{font-size:clamp(18px,1.9vw,25px);font-weight:500}
+  a.sec-count:hover{text-decoration:underline;text-underline-offset:5px}
+
+  /* ---------- featured project card (VLSI 5-Stage Standard-Cell Macro) ---------- */
+  .featured{
+    width:min(440px,90vw);margin:8px auto 0;background:var(--dark);color:#f2f2f0;
+    aspect-ratio:3/4.08;display:flex;flex-direction:column;overflow:hidden;
+    border-radius:14px;position:relative;border:1.5px solid rgba(12,12,12,.5);
+    transition:transform .55s var(--ease-out-expo),box-shadow .55s var(--ease-out-expo);
+  }
+  [data-theme="wafer"] .featured{border-color:rgba(255,255,255,.16)}
+  .featured:hover{transform:translateY(-8px) scale(1.012);box-shadow:0 32px 64px rgba(0,0,0,.38)}
+  .featured .f-head{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:15px 18px;font-weight:700;font-size:14.5px}
+  .featured .f-head-l{display:flex;align-items:center;gap:9px}
+  .featured .f-chip{width:27px;height:27px;border-radius:50%;background:var(--signal);color:#fff;display:grid;place-items:center;font-size:11.5px;font-weight:900;flex:none}
+  .featured .f-node{font-family:var(--mono);font-size:11px;color:var(--lime);letter-spacing:.04em}
+  .featured .f-art{flex:1;position:relative;margin:0 18px;background:var(--dark-2);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+  .featured .f-art img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .75s var(--ease-out-expo),filter .5s ease;
+    @media (prefers-reduced-motion: reduce){transition:none}
+  }
+  .featured:hover .f-art img{transform:scale(1.065);filter:contrast(1.1) brightness(1.06)}
+  .featured .f-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .badge{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:86px;height:86px;border-radius:50%;background:rgba(8,10,12,.92);
+    display:grid;place-items:center;box-shadow:0 0 0 1.5px rgba(183,242,36,.45),0 12px 30px rgba(0,0,0,.6);
+    transition:transform .55s var(--ease-out-expo),box-shadow .4s;
+  }
+  .featured:hover .badge{
+    transform:translate(-50%,-50%) rotate(90deg) scale(1.1);
+    box-shadow:0 0 0 2px var(--lime),0 14px 36px rgba(0,0,0,.75);
+  }
+  .featured .f-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:15px 18px 18px}
+  .featured .f-foot .t{font-weight:800;font-size:19px;line-height:1.12;text-transform:uppercase;letter-spacing:-.01em}
+  .featured .f-foot .s{font-family:var(--mono);font-size:11.5px;color:#b9bdc2;text-align:right;line-height:1.35}
+  .featured-cap{text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:16px auto 0;max-width:56ch}
+
+  /* ---------- project index + Macmillan floating cursor preview ---------- */
+  .proj-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:72px 0 10px}
   .proj-tools .lbl{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
-  .proj-tools input[type="search"]{flex:1 1 200px;background:transparent;border:0;border-bottom:2px solid var(--ink);
-    padding:8px 2px;font:inherit;font-weight:600;color:var(--ink);outline:none;border-radius:0}
+  .proj-tools input[type="search"]{
+    flex:1 1 200px;background:transparent;border:0;border-bottom:2px solid var(--ink);
+    padding:8px 2px;font:inherit;font-weight:600;color:var(--ink);outline:none;border-radius:0;
+    transition:border-color .25s;
+  }
+  .proj-tools input:focus{border-bottom-color:var(--m1-blue)}
   .proj-tools input::placeholder{color:var(--muted);font-weight:500}
-  .chip{background:transparent;border:1.5px solid var(--ink);border-radius:999px;padding:5px 13px;font-size:13.5px;font-weight:600}
-  .chip:hover{background:rgba(12,12,12,.08)}
+  .chip{
+    background:transparent;border:1.5px solid var(--ink);border-radius:999px;
+    padding:5px 13px;font-size:13.5px;font-weight:600;
+    transition:background .2s,color .2s,transform .2s var(--ease-out-expo);
+  }
+  .chip:hover{background:var(--line-soft);transform:scale(1.04)}
+  .chip:active{transform:scale(.96)}
   .chip.active{background:var(--ink);color:var(--bg)}
+
   .proj-list{list-style:none;margin:10px 0 0;padding:0;border-top:2px solid var(--ink)}
   .proj-row{border-bottom:1px solid var(--line)}
-  .proj-row a{display:grid;grid-template-columns:64px 1fr auto;gap:8px 20px;align-items:baseline;padding:24px 6px;transition:background .18s ease,color .18s ease}
-  .proj-row a:hover{background:var(--ink);color:var(--bg)}
-  .proj-row a:hover .p-desc,.proj-row a:hover .p-meta{color:#c9cbcc}
-  .proj-row a:hover .p-arrow{color:var(--lime);transform:translate(3px,-3px)}
+  .proj-row a{
+    display:grid;grid-template-columns:64px 1fr auto;gap:8px 20px;align-items:baseline;padding:24px 8px;
+    transition:background .25s ease,color .25s ease,padding-left .32s var(--ease-out-expo);
+  }
+  .proj-row a:hover{background:var(--ink);color:var(--bg);padding-left:20px}
+  .proj-row a:hover .p-desc,.proj-row a:hover .p-meta{color:var(--bg);opacity:.78}
+  .proj-row a:hover .p-arrow{color:var(--lime);transform:translate(4px,-4px)}
+  [data-theme="wafer"] .proj-row a:hover .p-arrow{color:var(--signal)}
   .p-num{font-family:var(--mono);font-size:14px;font-weight:600}
-  .p-name{font-size:clamp(25px,4.2vw,52px);font-weight:800;letter-spacing:-.025em;line-height:1.02;text-transform:uppercase;word-break:break-word}
+  .p-name{font-size:clamp(24px,4.1vw,50px);font-weight:800;letter-spacing:-.025em;line-height:1.02;text-transform:uppercase;word-break:break-word}
   .p-desc{grid-column:2;color:var(--muted);font-size:15.5px;max-width:62ch;margin:2px 0 0}
   .p-meta{grid-column:2;display:flex;gap:8px 18px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:8px}
-  .p-arrow{font-size:clamp(22px,3vw,38px);font-weight:700;transition:transform .18s ease;align-self:center}
+  .p-arrow{font-size:clamp(22px,3vw,38px);font-weight:700;transition:transform .25s var(--ease-out-expo),color .25s;align-self:center}
   .proj-empty{padding:34px 6px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line)}
   @media(max-width:640px){
-    .proj-row a{grid-template-columns:40px 1fr auto;padding:18px 2px}
+    .proj-row a{grid-template-columns:40px 1fr auto;padding:18px 4px}
     .p-desc,.p-meta{grid-column:2/4}
   }
+
+  /* Floating Hover Preview Card (Macmillan Studio signature interaction) */
+  .proj-preview{
+    position:fixed;left:0;top:0;width:296px;height:192px;z-index:260;
+    background:var(--dark);border:1.5px solid rgba(255,255,255,.2);border-radius:10px;
+    box-shadow:0 24px 54px rgba(0,0,0,.45);overflow:hidden;pointer-events:none;
+    opacity:0;transform:translate3d(-999px,-999px,0) scale(.88);
+    transition:opacity .25s var(--ease-out-expo);will-change:transform,opacity;
+  }
+  .proj-preview.visible{opacity:1}
+  .proj-preview-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:7px 10px;background:#16191e;border-bottom:1px solid rgba(255,255,255,.1);
+    font-family:var(--mono);font-size:10.5px;color:#cfd4da;
+  }
+  .proj-preview-head b{color:var(--lime)}
+  .proj-preview-body{position:relative;width:100%;height:calc(100% - 29px)}
+  .proj-preview-body svg,.proj-preview-body img{width:100%;height:100%;object-fit:cover;display:block}
+  @media(pointer:coarse),(max-width:860px){.proj-preview{display:none!important}}
+
   /* ---------- experience ---------- */
   .xp-list{border-top:2px solid var(--ink)}
-  .xp{display:grid;grid-template-columns:64px 1fr auto;gap:6px 20px;padding:26px 6px;border-bottom:1px solid var(--line);align-items:baseline}
+  .xp{
+    display:grid;grid-template-columns:64px 1fr auto;gap:6px 20px;padding:26px 6px;
+    border-bottom:1px solid var(--line);align-items:baseline;
+    transition:background .25s,padding-left .3s var(--ease-out-expo);
+  }
+  .xp:hover{background:var(--line-soft);padding-left:14px}
   .xp .n{font-family:var(--mono);font-size:14px;font-weight:600}
   .xp h3{margin:0;font-size:clamp(23px,3.4vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1.05;text-transform:uppercase}
-  .xp .org{font-weight:600;font-size:17px;margin-top:3px}
+  .xp .org{font-weight:600;font-size:17px;margin:4px 0 0}
   .xp .when{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
   .xp ul{grid-column:2;margin:10px 0 0;padding:0;list-style:none;color:var(--ink-soft);max-width:70ch}
   .xp li{margin:5px 0;padding-left:20px;position:relative;font-size:15.5px}
-  .xp li::before{content:"";position:absolute;left:0;top:.52em;width:8px;height:8px;background:var(--ink)}
+  .xp li::before{content:"";position:absolute;left:0;top:.52em;width:8px;height:8px;background:var(--ink);transition:transform .3s var(--ease-out-expo),background-color .25s}
+  .xp:hover li::before{transform:rotate(45deg);background:var(--signal)}
   .xp li strong{color:var(--ink)}
   @media(max-width:640px){.xp{grid-template-columns:40px 1fr}.xp .when{grid-column:2;text-align:left}.xp ul{grid-column:2}}
+
   /* ---------- capabilities ---------- */
   .cap-list{border-top:2px solid var(--ink)}
-  .cap{display:grid;grid-template-columns:64px 1fr 1.1fr;gap:6px 24px;padding:22px 6px;border-bottom:1px solid var(--line);align-items:baseline}
+  .cap{
+    display:grid;grid-template-columns:64px 1fr 1.1fr;gap:6px 24px;padding:22px 6px;
+    border-bottom:1px solid var(--line);align-items:baseline;
+    transition:padding-left .3s var(--ease-out-expo),background .25s;
+  }
+  .cap:hover{padding-left:14px;background:var(--line-soft)}
   .cap .n{font-family:var(--mono);font-size:14px;font-weight:600}
   .cap h3{margin:0;font-size:clamp(20px,2.6vw,32px);font-weight:800;letter-spacing:-.02em;line-height:1.1;text-transform:uppercase}
   .cap p{margin:0;color:var(--ink-soft);font-size:15.5px;max-width:56ch}
   @media(max-width:760px){.cap{grid-template-columns:40px 1fr}.cap p{grid-column:2}}
+
   .lang-strip{margin-top:44px}
   .lang-strip h3{font-family:var(--mono);font-size:13px;font-weight:600;margin:0 0 14px;color:var(--ink-soft);letter-spacing:.02em}
   .lang-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px 28px}
-  .lang-item .bar{height:8px;background:rgba(12,12,12,.18);margin-bottom:7px}
-  .lang-item .bar i{display:block;height:100%;background:var(--ink)}
+  .lang-item .bar{height:8px;background:var(--line-soft);margin-bottom:7px;overflow:hidden}
+  .lang-item .bar i{display:block;height:100%;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform 1.15s var(--ease-out-expo)}
+  .lang-item.in .bar i{transform:scaleX(1)}
   .lang-item .nm{font-weight:700;font-size:15px}
   .lang-item .pc{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
   .not-listed{margin-top:26px;color:var(--muted);font-size:14.5px;max-width:66ch}
+
   /* ---------- about ---------- */
   .statement{font-size:clamp(24px,3.6vw,44px);font-weight:700;line-height:1.22;letter-spacing:-.015em;max-width:26em;margin:0}
   .statement .dim{color:var(--muted)}
   .fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0;margin-top:56px;border-top:2px solid var(--ink)}
-  .fact{padding:20px 22px 24px 6px;border-bottom:1px solid var(--line)}
+  .fact{padding:20px 22px 24px 6px;border-bottom:1px solid var(--line);transition:padding-left .3s var(--ease-out-expo)}
+  .fact:hover{padding-left:16px}
   .fact h3{margin:0 0 9px;font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--ink-soft);text-transform:uppercase}
   .fact p{margin:0;color:var(--ink-soft);font-size:15.5px}
   .fact p strong{color:var(--ink)}
   .numbers{display:flex;gap:14px 54px;flex-wrap:wrap;margin-top:52px}
   .num b{display:block;font-size:clamp(44px,6.5vw,84px);font-weight:900;letter-spacing:-.03em;line-height:.95}
   .num span{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
-  /* ---------- contact ---------- */
-  .contact-big{text-transform:uppercase;font-weight:900;line-height:.82;letter-spacing:-.035em;font-size:clamp(58px,13.5vw,208px);margin:26px 0 0}
+
+  /* ---------- INTERACTIVE VLSI SILICON LAB (MMU Arbiter Sim + VLSI P&R Tetris Easter Egg) ---------- */
+  .vlsi-lab-sec{
+    content-visibility:auto;
+    contain-intrinsic-size:auto none auto 560px;
+  }
+  .vlsi-lab{
+    background:var(--dark);color:#f2f2f0;border-radius:14px;
+    border:1.5px solid rgba(12,12,12,.6);overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.22);
+  }
+  [data-theme="wafer"] .vlsi-lab{border-color:rgba(255,255,255,.18)}
+  .lab-bar{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:13px 18px;background:#15181d;border-bottom:1px solid var(--dark-line);
+  }
+  .lab-tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .lab-tab{
+    font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.03em;
+    padding:6px 12px;border-radius:6px;color:#aeb4bc;border:1px solid transparent;
+    transition:background .2s,color .2s,border-color .2s;
+  }
+  .lab-tab:hover{color:#fff;border-color:rgba(255,255,255,.18)}
+  .lab-tab.active{background:var(--lime);color:#0c0c0c}
+  .lab-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lab-btn{
+    font-family:var(--mono);font-size:11.5px;font-weight:700;
+    padding:5px 11px;border-radius:6px;border:1px solid rgba(255,255,255,.22);
+    color:#e8eaed;background:rgba(255,255,255,.04);
+    transition:background .2s,color .2s,border-color .2s;
+  }
+  .lab-btn:hover{border-color:var(--lime);color:var(--lime)}
+  .lab-btn.accent{background:rgba(79,124,255,.2);border-color:var(--m1-blue);color:#cfe0ff}
+  .lab-btn.accent.iid-on{background:rgba(183,242,36,.18);border-color:var(--lime);color:var(--lime)}
+
+  .lab-stage{
+    position:relative;display:grid;grid-template-columns:1fr 270px;min-height:380px;
+  }
+  @media(max-width:860px){.lab-stage{grid-template-columns:1fr}}
+  .lab-canvas-wrap{position:relative;min-height:360px;background:#0b0d10;overflow:hidden}
+  .lab-canvas-wrap canvas{width:100%;height:100%;display:block}
+  .lab-side{
+    padding:18px;border-left:1px solid var(--dark-line);background:#12151a;
+    display:flex;flex-direction:column;justify-content:space-between;gap:16px;
+    font-family:var(--mono);font-size:12px;
+  }
+  @media(max-width:860px){.lab-side{border-left:0;border-top:1px solid var(--dark-line)}}
+  .lab-metric{margin-bottom:12px}
+  .lab-metric .k{color:#8c939d;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  .lab-metric .v{font-family:var(--font);font-size:26px;font-weight:900;color:#fff;line-height:1.1;margin-top:2px}
+  .lab-metric .v.lime{color:var(--lime)}
+  .lab-note{color:#9ca3ad;line-height:1.45;font-size:11.5px;margin:0}
+  .tetris-pad{display:none;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+  .vlsi-lab[data-mode="tetris"] .tetris-pad{display:grid}
+  .pad-btn{
+    padding:8px 0;border-radius:5px;border:1px solid rgba(255,255,255,.2);
+    background:#1b1f26;color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;text-align:center;
+  }
+  .pad-btn:active{background:var(--lime);color:#0c0c0c}
+
+  /* ---------- contact & VLSI layer color spec footer ---------- */
+  .contact-big{
+    text-transform:uppercase;font-weight:900;line-height:.82;
+    letter-spacing:-.035em;font-size:clamp(58px,13.5vw,208px);margin:26px 0 0;
+  }
+  .contact-big a{transition:color .3s,-webkit-text-stroke .3s;display:inline-block}
   .contact-big a:hover{color:transparent;-webkit-text-stroke:2.5px var(--ink)}
+  .magnetic{display:inline-block;transition:transform .3s var(--ease-out-expo)}
   .contact-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:36px}
-  .btn{display:inline-flex;align-items:center;gap:9px;border:2px solid var(--ink);border-radius:999px;padding:11px 22px;
-    font-weight:700;font-size:16px;background:transparent;transition:background .15s ease,color .15s ease}
-  .btn:hover{background:var(--ink);color:var(--bg)}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;border:2px solid var(--ink);
+    border-radius:999px;padding:11px 22px;font-weight:700;font-size:16px;background:transparent;
+    transition:background .2s ease,color .2s ease,transform .25s var(--ease-out-expo);
+  }
+  .btn:hover{background:var(--ink);color:var(--bg);transform:scale(1.04)}
+  .btn:active{transform:scale(.97)}
   .btn.solid{background:var(--ink);color:var(--bg)}
   .btn.solid:hover{background:transparent;color:var(--ink)}
   #copyMsg{font-family:var(--mono);font-size:13px;font-weight:700}
-  footer{margin-top:110px;border-top:2px solid var(--ink);padding:20px 0 8px;display:flex;gap:10px 28px;flex-wrap:wrap;
-    font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+
+  .layer-specs{
+    margin-top:84px;padding-top:20px;border-top:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  }
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .swatch{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 9px;
+    border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--ink-soft);
+    transition:transform .2s var(--ease-out-expo),border-color .2s;
+  }
+  .swatch:hover{transform:translateY(-2px);border-color:var(--ink)}
+  .swatch i{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid rgba(0,0,0,.25)}
+
+  footer{
+    margin-top:22px;border-top:2px solid var(--ink);padding:20px 0 8px;
+    display:flex;gap:10px 28px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;color:var(--muted);
+  }
   footer .r{margin-left:auto}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  html{scroll-padding-top:20px}
-  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
 
-<!-- abstract MG mark, top-right (as on the reference) -->
-<div class="mark" aria-hidden="true">
-  <svg viewBox="0 0 48 48" fill="currentColor"><path d="M6 10c0-2.2 1.8-4 4-4h9c1.7 0 3.1.8 4 2 .9-1.2 2.3-2 4-2h9c2.2 0 4 1.8 4 4v24c0 2.2-1.8 4-4 4h-6l-3 5h-6l-3-5h-6c-2.2 0-4-1.8-4-4V10zm9 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2s2-.9 2-2v-6.4l-1.7-2.8 4.2-3.4V15c0-1.1-.9-2-2-2H15zm18 0h-2.5c-1.1 0-2 .9-2 2v1.4l4.2 3.4-1.7 2.8V29c0 1.1.9 2 2 2s2-.9 2-2V15c0-1.1-.9-2-2-2zM23 17.6l-2.9 2.3 2.9 4.8 2.9-4.8-2.9-2.3z"/></svg>
+<!-- VLSI boot cloak -->
+<div class="page-loader" id="pageLoader" aria-hidden="true">
+  <div class="loader-top"><span>UW ECE · GDSII STREAM IN</span><span>DRC: 0 · LVS: MATCH</span></div>
+  <div class="loader-center">
+    <div class="loader-text" id="loaderText"></div>
+    <div class="loader-bar"><i></i></div>
+  </div>
+  <div class="loader-bot"><span>CORE: CPU + MMU ARBITER</span><span>martingongg.github.io</span></div>
 </div>
 
-<!-- fixed bottom bar, as on the reference -->
+<!-- decorative scroll progress bar (aria-hidden per modern-web-guidance) -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<!-- custom compositor cursor -->
+<div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-label" id="cursorLabel"></span></div>
+<div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+
+<!-- floating project index preview card -->
+<div class="proj-preview" id="projPreview" aria-hidden="true">
+  <div class="proj-preview-head"><span id="projPrevName">lab4-pipelined-cpu</span><b id="projPrevLang">SV · RTL</b></div>
+  <div class="proj-preview-body" id="projPrevBody"></div>
+</div>
+
+<!-- fixed top-left wafer theme & motion toggle -->
+<div class="topbar-util">
+  <button class="util-pill" id="themeToggle" type="button" data-cursor="SUBSTRATE" aria-label="Toggle Silicon Wafer dark theme">
+    <span class="sw" aria-hidden="true"></span><span id="themeLabel">SILICON DARK</span>
+  </button>
+  <button class="util-pill hide-sm" id="motionToggle" type="button" data-cursor="CLOCK" aria-pressed="false" aria-label="Pause or resume ambient motion">
+    <span id="motionLabel">CLK: RUN</span>
+  </button>
+</div>
+
+<!-- abstract MG silicon package mark, top-right -->
+<a class="mark" href="#top" aria-label="Back to top" data-cursor="TOP">
+  <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M6 10c0-2.2 1.8-4 4-4h9c1.7 0 3.1.8 4 2 .9-1.2 2.3-2 4-2h9c2.2 0 4 1.8 4 4v24c0 2.2-1.8 4-4 4h-6l-3 5h-6l-3-5h-6c-2.2 0-4-1.8-4-4V10zm9 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2s2-.9 2-2v-6.4l-1.7-2.8 4.2-3.4V15c0-1.1-.9-2-2-2H15zm18 0h-2.5c-1.1 0-2 .9-2 2v1.4l4.2 3.4-1.7 2.8V29c0 1.1.9 2 2 2s2-.9 2-2V15c0-1.1-.9-2-2-2zM23 17.6l-2.9 2.3 2.9 4.8 2.9-4.8-2.9-2.3z"/></svg>
+</a>
+
+<!-- fixed bottom bar with CSS scroll-target-group scrollspy -->
 <div class="bottombar">
-  <div class="who"><span class="sq" aria-hidden="true"></span><span>Qijun “Martin” Gong<span class="role"> — Hardware Engineer</span></span></div>
-  <nav aria-label="Sections"><a href="#projects">Projects,</a><a href="#experience">Experience,</a><a href="#capabilities">Capabilities,</a><a href="#about">About</a></nav>
+  <div class="who"><span class="sq" aria-hidden="true"></span><span>Qijun "Martin" Gong<span class="role"> — Hardware &amp; VLSI Engineer</span></span></div>
+  <nav aria-label="Sections" id="secNav">
+    <a href="#projects">Projects,</a>
+    <a href="#experience">Experience,</a>
+    <a href="#capabilities">Capabilities,</a>
+    <a href="#about">About,</a>
+    <a href="#vlsi-lab">Silicon Lab</a>
+  </nav>
   <a class="contact-link" href="#contact">Contact</a>
 </div>
 
-<main>
+<main id="top">
   <!-- ================= HERO ================= -->
   <div class="wrap">
     <header class="hero">
-      <h1 class="sr">Martin Gong — hardware engineer</h1>
-      <div class="hero-type" aria-hidden="true">
-        <div class="l1">M<span class="px">A</span>RTIN</div>
-      </div>
-      <div class="hero-media" role="img" aria-label="Diagram of a CPU die with traced signals and tracked nodes">
-        <svg viewBox="0 0 880 517" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <rect width="880" height="517" fill="#101214"/>
-          <g stroke="#2c3138" stroke-width="1">
-            <path d="M0 64H880M0 128H880M0 192H880M0 256H880M0 320H880M0 384H880M0 448H880M64 0V517M128 0V517M192 0V517M256 0V517M320 0V517M384 0V517M448 0V517M512 0V517M576 0V517M640 0V517M704 0V517M768 0V517M832 0V517"/>
-          </g>
-          <!-- traces -->
-          <g fill="none" stroke-width="3">
-            <path d="M440 258 H180 V110 H60" stroke="#4f7cff"/>
-            <path d="M440 258 H640 V150 H820" stroke="#ff5a4e"/>
-            <path d="M440 258 V420 H240" stroke="#9a6bff"/>
-            <path d="M440 258 H600 V380 H800" stroke="#4f7cff"/>
-            <path d="M440 258 V90 H700" stroke="#3ecf8e"/>
-            <path d="M440 258 H150 V330 H60" stroke="#9a6bff"/>
-          </g>
-          <!-- the die -->
-          <rect x="356" y="174" width="168" height="168" fill="#17191d" stroke="#f2f2f0" stroke-width="2.5"/>
-          <rect x="392" y="210" width="96" height="96" fill="none" stroke="#3a3f47" stroke-width="2"/>
-          <text x="440" y="252" text-anchor="middle" fill="#f2f2f0" font-family="Archivo,sans-serif" font-weight="900" font-size="30">CPU</text>
-          <text x="440" y="282" text-anchor="middle" fill="#8f959d" font-family="monospace" font-size="13">MMU · DTLB</text>
-          <g fill="#f2f2f0">
-            <circle cx="356" cy="216" r="5"/><circle cx="356" cy="258" r="5"/><circle cx="356" cy="300" r="5"/>
-            <circle cx="524" cy="216" r="5"/><circle cx="524" cy="258" r="5"/><circle cx="524" cy="300" r="5"/>
-            <circle cx="398" cy="174" r="5"/><circle cx="440" cy="174" r="5"/><circle cx="482" cy="174" r="5"/>
-            <circle cx="398" cy="342" r="5"/><circle cx="440" cy="342" r="5"/><circle cx="482" cy="342" r="5"/>
-          </g>
-          <!-- tracked nodes, like the reference's pose skeleton -->
-          <g stroke-width="3.5" fill="none">
-            <path d="M180 110 L300 196 L356 258" stroke="#4f7cff"/>
-            <path d="M640 150 L560 210 L524 258" stroke="#ff5a4e"/>
-            <path d="M600 380 L520 320 L482 342" stroke="#9a6bff"/>
-          </g>
-          <g fill="#fff" stroke="#101214" stroke-width="2">
-            <circle cx="180" cy="110" r="8"/><circle cx="300" cy="196" r="8"/><circle cx="640" cy="150" r="8"/>
-            <circle cx="560" cy="210" r="8"/><circle cx="600" cy="380" r="8"/><circle cx="520" cy="320" r="8"/>
-          </g>
-          <text x="34" y="482" fill="#8f959d" font-family="monospace" font-size="15">fig. 01 — arbitration, traced</text>
-          <text x="846" y="482" text-anchor="end" fill="#b7f224" font-family="monospace" font-size="15">+20% MMU</text>
-        </svg>
-      </div>
-      <div class="hero-type" aria-hidden="true">
-        <div class="l2">G<span class="px">O</span>NG<sup class="reg">®</sup></div>
+      <h1 class="sr">Martin Gong — Hardware and VLSI Engineer</h1>
+
+      <div class="hero-lockup">
+        <div class="hero-type" aria-hidden="true">
+          <div class="l1">M<span class="px" data-glyph="A">A</span>RTIN</div>
+        </div>
+
+        <div class="hero-media-parallax">
+          <div class="hero-media" id="heroMedia" data-layer="all" data-cursor-mode="probe">
+            <div class="die-toolbar">
+              <div class="die-modes" role="toolbar" aria-label="VLSI die inspection layer">
+                <button type="button" class="die-mode-btn active" data-set-layer="all">All Layers</button>
+                <button type="button" class="die-mode-btn" data-set-layer="floorplan">Floorplan</button>
+                <button type="button" class="die-mode-btn" data-set-layer="traces">M1–M4 Bus</button>
+                <button type="button" class="die-mode-btn" data-set-layer="raw">Raw Die</button>
+              </div>
+              <div class="die-coords" id="dieCoords" aria-hidden="true">X: 0968µm · Y: 0364µm · M3</div>
+            </div>
+
+            <div class="hero-media-inner" id="heroMediaInner">
+              <picture>
+                <source srcset="assets/vlsi-cpu-hero.webp" type="image/webp"/>
+                <img class="hero-die-img" src="assets/vlsi-cpu-hero.jpg"
+                     alt="Top-down VLSI silicon die microphotograph of a pipelined CPU core with DTLB CAM arrays, 6T-SRAM cache banks, standard-cell logic sea, and IID-recognizing MMU arbiter"
+                     width="1376" height="768" fetchpriority="high"/>
+              </picture>
+
+              <!-- Pixel-accurate VLSI CAD inspection & Manhattan signal-trace overlay -->
+              <svg class="vlsi-hud" viewBox="0 0 1376 768" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <filter id="signalGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3.5" result="b"/>
+                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+
+                <!-- Manhattan metal-layer buses aligned to physical channels in vlsi-cpu-hero -->
+                <g class="vlsi-traces-layer" filter="url(#signalGlow)">
+                  <path id="busDtlbToMmu" class="vlsi-bus b1" d="M258 360 H806 V336 H946" stroke="#ff5a4e"/>
+                  <path id="busSramToMmu" class="vlsi-bus b2" d="M536 226 V404 H852 V388 H1018" stroke="#4f7cff"/>
+                  <path id="busMmuToExec" class="vlsi-bus b3" d="M970 430 V566 H1120" stroke="#b7f224"/>
+                  <path id="busStdToMmu" class="vlsi-bus b4" d="M1044 166 V282 H968" stroke="#9a6bff"/>
+
+                  <!-- Live data flits moving along Manhattan M1-M4 tracks -->
+                  <rect width="10" height="5" x="-5" y="-2.5" fill="#fff">
+                    <animateMotion dur="2.6s" repeatCount="indefinite" rotate="auto"><mpath href="#busDtlbToMmu"/></animateMotion>
+                  </rect>
+                  <rect width="10" height="5" x="-5" y="-2.5" fill="#b7f224">
+                    <animateMotion dur="3.1s" begin="0.4s" repeatCount="indefinite" rotate="auto"><mpath href="#busSramToMmu"/></animateMotion>
+                  </rect>
+                  <rect width="9" height="5" x="-4.5" y="-2.5" fill="#b7f224">
+                    <animateMotion dur="1.9s" begin="0.8s" repeatCount="indefinite" rotate="auto"><mpath href="#busMmuToExec"/></animateMotion>
+                  </rect>
+                  <rect width="9" height="5" x="-4.5" y="-2.5" fill="#3ecf8e">
+                    <animateMotion dur="2.2s" begin="0.2s" repeatCount="indefinite" rotate="auto"><mpath href="#busStdToMmu"/></animateMotion>
+                  </rect>
+                </g>
+
+                <!-- Interactive VLSI Floorplan Macro Bounding Boxes -->
+                <g class="vlsi-floorplan-layer">
+                  <g class="vlsi-block" data-block="DTLB · TAG CAM" data-spec="64-entry fully-associative CAM · M1/M2 wordlines · 1-cycle lookup">
+                    <rect class="blk-fill" x="112" y="126" width="146" height="520"/>
+                    <path d="M112 142 V126 H128 M242 126 H258 V142 M112 630 V646 H128 M242 646 H258 V630" fill="none" stroke="#b7f224" stroke-width="2.5"/>
+                    <text class="blk-tag" x="122" y="150">DTLB CAM</text>
+                  </g>
+
+                  <g class="vlsi-block" data-block="L1/L2 6T-SRAM · PTW" data-spec="4×32KB dense bitcell banks + central sense-amp spine · CacheFlex target">
+                    <rect class="blk-fill" x="288" y="118" width="504" height="538"/>
+                    <path d="M288 136 V118 H306 M774 118 H792 V136 M288 638 V656 H306 M774 656 H792 V638" fill="none" stroke="#4f7cff" stroke-width="2.5"/>
+                    <text class="blk-tag" x="302" y="144">4×6T-SRAM · PTW</text>
+                  </g>
+
+                  <g class="vlsi-block" data-block="STD-CELL SEA · INVD1" data-spec="Cadence Virtuoso FreePDK rows · DRC / LVS / PEX verified">
+                    <rect class="blk-fill" x="832" y="80" width="432" height="158"/>
+                    <path d="M832 96 V80 H848 M1248 80 H1264 V96 M832 222 V238 H848 M1248 238 H1264 V222" fill="none" stroke="#9a6bff" stroke-width="2.5"/>
+                    <text class="blk-tag" x="846" y="106">STD-CELL SEA</text>
+                  </g>
+
+                  <g class="vlsi-block active" data-block="MMU · IID ARBITER" data-spec="Custom IID-recognizing crossbar arbiter · +20.0% StarFive MMU speedup">
+                    <rect class="blk-fill" x="812" y="252" width="322" height="224"/>
+                    <path d="M812 270 V252 H830 M1116 252 H1134 V270 M812 458 V476 H830 M1116 476 H1134 V458" fill="none" stroke="#b7f224" stroke-width="3"/>
+                    <text class="blk-tag" x="826" y="278">MMU · IID ARBITER</text>
+                  </g>
+
+                  <g class="vlsi-block" data-block="5-STAGE DATAPATH · ALU" data-spec="Pipelined IF·ID·EX·MEM·WB execution + hazard forwarding network">
+                    <rect class="blk-fill" x="826" y="490" width="440" height="194"/>
+                    <path d="M826 508 V490 H844 M1248 490 H1266 V508 M826 666 V684 H844 M1248 684 H1266 V666" fill="none" stroke="#3ecf8e" stroke-width="2.5"/>
+                    <text class="blk-tag" x="840" y="516">5-STAGE ALU · EXEC</text>
+                  </g>
+                </g>
+
+                <!-- Live CAD Probe Crosshair -->
+                <g id="cadCrosshair" opacity="0.72" pointer-events="none">
+                  <line id="cadV" x1="968" y1="0" x2="968" y2="768" stroke="#b7f224" stroke-width="1" stroke-dasharray="4 4"/>
+                  <line id="cadH" x1="0" y1="364" x2="1376" y2="364" stroke="#b7f224" stroke-width="1" stroke-dasharray="4 4"/>
+                  <rect id="cadBox" x="958" y="354" width="20" height="20" fill="none" stroke="#b7f224" stroke-width="1.8"/>
+                </g>
+              </svg>
+            </div>
+
+            <div class="die-status">
+              <span id="dieReadout"><b>MMU · IID ARBITER</b> — Custom IID-recognizing crossbar arbiter · +20.0% StarFive MMU speedup</span>
+              <span class="right">+20% MMU · LVS CLEAN</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-type" aria-hidden="true">
+          <div class="l2">G<span class="px" data-glyph="O">O</span>NG<sup class="reg">®</sup></div>
+        </div>
       </div>
 
       <div class="hero-lower">
-        <p class="idx"><span class="sq"></span> RTL · Verification · FPGA</p>
+        <p class="idx reveal" data-delay="1"><span class="sq"></span> RTL · VLSI · Verification · FPGA</p>
         <div>
-          <p class="hero-intro">Fourth-year ECE at the University of Washington building hardware that has to be fast <em>and</em> provably correct — CPU memory systems, standard cells, and 400V power electronics.</p>
-          <div class="hero-meta">
+          <p class="hero-intro reveal" data-delay="2">Fourth-year ECE at the University of Washington building hardware that has to be fast <em>and</em> provably correct — CPU memory systems, VLSI standard cells, and 400V power electronics.</p>
+          <div class="hero-meta reveal" data-delay="3">
             <span><b>Based</b> Seattle, WA · also Toronto</span>
             <span><b>Degree</b> B.S. ECE, UW — June 2027 · GPA 3.40</span>
             <span class="avail"><i></i><b>Open to</b> Summer 2027 &amp; new-grad hardware roles</span>
@@ -263,52 +855,89 @@
     </header>
   </div>
 
+  <!-- velocity-reactive VLSI marquee -->
+  <div class="marquee reveal" data-delay="2" aria-label="Core technical areas">
+    <div class="marquee-track" id="marqueeTrack">
+      <span>SystemVerilog RTL</span><span class="dot">■</span>
+      <span>CPU &amp; MMU Microarchitecture</span><span class="dot">■</span>
+      <span>VLSI Standard Cells</span><span class="dot">■</span>
+      <span>Cadence Virtuoso</span><span class="dot">■</span>
+      <span>DRC · LVS · PEX</span><span class="dot">■</span>
+      <span>FPGA Prototyping</span><span class="dot">■</span>
+      <span>Verification</span><span class="dot">■</span>
+      <span>400V Power Electronics</span><span class="dot">■</span>
+      <span>C++ &amp; Python</span><span class="dot">■</span>
+      <!-- seamless second half -->
+      <span>SystemVerilog RTL</span><span class="dot">■</span>
+      <span>CPU &amp; MMU Microarchitecture</span><span class="dot">■</span>
+      <span>VLSI Standard Cells</span><span class="dot">■</span>
+      <span>Cadence Virtuoso</span><span class="dot">■</span>
+      <span>DRC · LVS · PEX</span><span class="dot">■</span>
+      <span>FPGA Prototyping</span><span class="dot">■</span>
+      <span>Verification</span><span class="dot">■</span>
+      <span>400V Power Electronics</span><span class="dot">■</span>
+      <span>C++ &amp; Python</span><span class="dot">■</span>
+    </div>
+  </div>
+
   <!-- ================= PROJECTS ================= -->
   <section id="projects" class="wrap">
-    <div class="sec-top"><p class="idx"><span class="sq"></span> {01—06}</p></div>
-    <div class="sec-mid">
-      <p class="sec-label"><span class="sq"></span> Selected Projects <sup>(06)</sup></p>
-      <a class="sec-count" href="https://github.com/martingongg" target="_blank" rel="noopener">All projects on GitHub <sup>↗</sup></a>
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> {01—06}</p></div>
+    <div class="sec-mid reveal" data-delay="1">
+      <h2 class="sec-label"><span class="sq"></span> <span data-scramble>Selected Projects</span> <sup>(06)</sup></h2>
+      <a class="sec-count magnetic" href="https://github.com/martingongg" target="_blank" rel="noopener" data-cursor="GITHUB ↗">All projects on GitHub <sup>↗</sup></a>
     </div>
 
-    <a class="featured" href="https://github.com/martingongg/lab4-pipelined-cpu" target="_blank" rel="noopener" aria-label="Featured project: lab4-pipelined-cpu on GitHub">
-      <div class="f-head"><span class="f-chip">UW</span> Featured — Pipelined CPU</div>
+    <a class="featured reveal-scale" data-delay="2" href="https://github.com/martingongg/lab4-pipelined-cpu" target="_blank" rel="noopener" data-cursor="OPEN RTL ↗" aria-label="Featured project: lab4-pipelined-cpu on GitHub">
+      <div class="f-head">
+        <span class="f-head-l"><span class="f-chip">UW</span> Featured — Pipelined CPU</span>
+        <span class="f-node">5-SLICE VLSI</span>
+      </div>
       <div class="f-art">
-        <svg viewBox="0 0 394 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <rect width="394" height="380" fill="#1b1e22"/>
-          <g fill="none" stroke="#4f7cff" stroke-width="3">
-            <path d="M52 70 h70 v60 h80 v-40"/>
-            <path d="M52 300 h90 v-70 h120 v60 h80"/>
-            <path d="M122 70 v150 h60"/>
+        <picture>
+          <source srcset="assets/vlsi-pipeline-macro.webp" type="image/webp"/>
+          <img src="assets/vlsi-pipeline-macro.jpg"
+               alt="Top-down 5-slice CMOS standard-cell VLSI layout representing the IF, ID, EX, MEM, and WB stages of a pipelined CPU"
+               width="1024" height="1024" loading="lazy"/>
+        </picture>
+        <!-- Stage labels & forwarding bus overlay aligned to the 5 physical bit-slices -->
+        <svg class="f-overlay" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect width="1024" height="96" fill="rgba(10,12,15,0.78)"/>
+          <g font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="700" font-size="28" text-anchor="middle" fill="#b7f224">
+            <text x="106" y="60">IF</text>
+            <text x="310" y="60">ID</text>
+            <text x="514" y="60">EX</text>
+            <text x="718" y="60">MEM</text>
+            <text x="920" y="60">WB</text>
           </g>
-          <g fill="#24272c" stroke="#f2f2f0" stroke-width="2">
-            <rect x="42" y="52" width="88" height="52"/><rect x="196" y="52" width="88" height="52"/>
-            <rect x="42" y="272" width="88" height="52"/><rect x="262" y="262" width="88" height="52"/>
-            <rect x="158" y="150" width="80" height="60"/>
-          </g>
-          <g fill="#f2f2f0" font-family="Archivo,sans-serif" font-weight="800" font-size="15" text-anchor="middle">
-            <text x="86" y="84">FETCH</text><text x="240" y="84">EXEC</text>
-            <text x="86" y="304">MEM</text><text x="306" y="294">WB</text>
-            <text x="198" y="186">ALU</text>
-          </g>
-          <g fill="#fff"><circle cx="122" cy="130" r="6"/><circle cx="202" cy="90" r="6"/><circle cx="142" cy="230" r="6"/><circle cx="262" cy="290" r="6"/></g>
+          <!-- Hazard forwarding paths (EX->ID, MEM->EX) -->
+          <path id="fwdPath1" d="M514 890 V948 H310 V890" fill="none" stroke="#b7f224" stroke-width="5"/>
+          <path id="fwdPath2" d="M718 890 V978 H514 V890" fill="none" stroke="#4f7cff" stroke-width="5"/>
+          <circle r="8" fill="#fff">
+            <animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#fwdPath1"/></animateMotion>
+          </circle>
+          <circle r="8" fill="#b7f224">
+            <animateMotion dur="2.2s" begin="0.5s" repeatCount="indefinite"><mpath href="#fwdPath2"/></animateMotion>
+          </circle>
         </svg>
-        <span class="badge" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 34 34" fill="#b7f224"><rect x="14" y="2" width="6" height="6"/><rect x="6" y="6" width="6" height="6"/><rect x="22" y="6" width="6" height="6"/><rect x="14" y="10" width="6" height="6"/><rect x="2" y="14" width="6" height="6"/><rect x="26" y="14" width="6" height="6"/><rect x="14" y="18" width="6" height="6"/><rect x="6" y="22" width="6" height="6"/><rect x="22" y="22" width="6" height="6"/><rect x="14" y="26" width="6" height="6"/></svg></span>
+        <span class="badge" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="#b7f224"><rect x="14" y="2" width="6" height="6"/><rect x="6" y="6" width="6" height="6"/><rect x="22" y="6" width="6" height="6"/><rect x="14" y="10" width="6" height="6"/><rect x="2" y="14" width="6" height="6"/><rect x="26" y="14" width="6" height="6"/><rect x="14" y="18" width="6" height="6"/><rect x="6" y="22" width="6" height="6"/><rect x="22" y="22" width="6" height="6"/><rect x="14" y="26" width="6" height="6"/></svg>
+        </span>
       </div>
       <div class="f-foot">
         <span class="t">lab4 —<br/>pipelined cpu</span>
-        <span class="s">SystemVerilog<br/>RTL · UW ECE</span>
+        <span class="s">SystemVerilog · VLSI<br/>IF·ID·EX·MEM·WB</span>
       </div>
     </a>
-    <p class="featured-cap">Five-stage pipelined processor — datapath, control, and hazard handling in SystemVerilog. Click to open it on GitHub.</p>
+    <p class="featured-cap reveal" data-delay="3">Five-stage pipelined processor — datapath slices, hazard forwarding, and control logic in SystemVerilog. Hover index rows below for live schematics.</p>
 
-    <div class="proj-tools">
+    <div class="proj-tools reveal" data-delay="1">
       <span class="lbl">Index —</span>
       <input type="search" id="projSearch" placeholder="Search the index…" aria-label="Search projects"/>
-      <button class="chip active" data-filter="all">All</button>
-      <button class="chip" data-filter="SystemVerilog">SystemVerilog</button>
-      <button class="chip" data-filter="Python">Python</button>
-      <button class="chip" data-filter="JavaScript">JavaScript</button>
+      <button class="chip active" type="button" data-filter="all">All</button>
+      <button class="chip" type="button" data-filter="SystemVerilog">SystemVerilog</button>
+      <button class="chip" type="button" data-filter="Python">Python</button>
+      <button class="chip" type="button" data-filter="JavaScript">JavaScript</button>
     </div>
     <ul class="proj-list" id="projList"></ul>
     <p class="proj-empty" id="projEmpty" hidden>Nothing in the index matches that. Try another keyword or language.</p>
@@ -316,26 +945,26 @@
 
   <!-- ================= EXPERIENCE ================= -->
   <section id="experience" class="wrap">
-    <div class="sec-top"><p class="idx"><span class="sq"></span> {01—04}</p></div>
-    <div class="sec-mid">
-      <p class="sec-label"><span class="sq"></span> Experience <sup>(04)</sup></p>
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> {01—04}</p></div>
+    <div class="sec-mid reveal" data-delay="1">
+      <h2 class="sec-label"><span class="sq"></span> <span data-scramble>Experience</span> <sup>(04)</sup></h2>
       <span class="sec-count">2023 — Now</span>
     </div>
     <div class="xp-list">
-      <article class="xp">
+      <article class="xp reveal" data-delay="1">
         <span class="n">/ 01</span>
         <div>
           <h3>RTL Intern</h3>
           <p class="org">StarFive IP — Singapore</p>
           <ul>
             <li>Evaluated a round-robin DTLB prefetch design — measured it barely faster than no prefetch at all, so scrapped it on the data.</li>
-            <li>Designed an <strong>IID-recognizing arbiter from scratch</strong> for the CPU MMU, meeting the team’s <strong>20% speedup</strong> demand.</li>
+            <li>Designed an <strong>IID-recognizing arbiter from scratch</strong> for the CPU MMU, meeting the team's <strong>20% speedup</strong> demand.</li>
             <li>SystemVerilog RTL and test-environment work across a large, real silicon codebase.</li>
           </ul>
         </div>
         <span class="when">Jun — Sep 2026</span>
       </article>
-      <article class="xp">
+      <article class="xp reveal" data-delay="2">
         <span class="n">/ 02</span>
         <div>
           <h3>Electrical Engineer</h3>
@@ -344,7 +973,7 @@
         </div>
         <span class="when">May 2024 — Now</span>
       </article>
-      <article class="xp">
+      <article class="xp reveal" data-delay="3">
         <span class="n">/ 03</span>
         <div>
           <h3>Data Science Intern</h3>
@@ -353,7 +982,7 @@
         </div>
         <span class="when">2024</span>
       </article>
-      <article class="xp">
+      <article class="xp reveal" data-delay="4">
         <span class="n">/ 04</span>
         <div>
           <h3>Electrical / Avionics</h3>
@@ -367,129 +996,1030 @@
 
   <!-- ================= CAPABILITIES ================= -->
   <section id="capabilities" class="wrap">
-    <div class="sec-top"><p class="idx"><span class="sq"></span> {01—06}</p></div>
-    <div class="sec-mid">
-      <p class="sec-label"><span class="sq"></span> Capabilities <sup>(06)</sup></p>
-      <span class="sec-count">Only what I’ve actually used</span>
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> {01—06}</p></div>
+    <div class="sec-mid reveal" data-delay="1">
+      <h2 class="sec-label"><span class="sq"></span> <span data-scramble>Capabilities</span> <sup>(06)</sup></h2>
+      <span class="sec-count">Only what I've actually used</span>
     </div>
     <div class="cap-list">
-      <div class="cap"><span class="n">/ 01</span><h3>HDL &amp; Digital Design</h3><p>SystemVerilog · Verilog · RTL design · MMU / CPU microarchitecture · Arbiters &amp; prefetch · FPGA prototyping</p></div>
-      <div class="cap"><span class="n">/ 02</span><h3>Verification</h3><p>Test environments · ModelSim validation · Measurement-driven design — kill a design when the numbers say so, then rebuild</p></div>
-      <div class="cap"><span class="n">/ 03</span><h3>Software</h3><p>C++ · Python · Data pipelines &amp; analysis · Linux (ECE Lab / remote RDP workflow) · Git</p></div>
-      <div class="cap"><span class="n">/ 04</span><h3>EDA &amp; Physical Design</h3><p>Cadence Virtuoso · Schematic &amp; layout · DRC / LVS / PEX · FreePDK standard cells · Sentaurus TCAD (lab)</p></div>
-      <div class="cap"><span class="n">/ 05</span><h3>Embedded &amp; Power</h3><p>ESP32 flight tracking · 400V battery / power systems · Avionics &amp; electrical bring-up · Bench debugging &amp; checkout</p></div>
-      <div class="cap"><span class="n">/ 06</span><h3>How I Work</h3><p>Measure first · Write it in my own words · Small, testable changes · Ask the data before defending a design</p></div>
+      <div class="cap reveal" data-delay="1"><span class="n">/ 01</span><h3>HDL &amp; Digital Design</h3><p>SystemVerilog · Verilog · RTL design · MMU / CPU microarchitecture · Arbiters &amp; prefetch · FPGA prototyping</p></div>
+      <div class="cap reveal" data-delay="2"><span class="n">/ 02</span><h3>Verification</h3><p>Test environments · ModelSim validation · Measurement-driven design — kill a design when the numbers say so, then rebuild</p></div>
+      <div class="cap reveal" data-delay="3"><span class="n">/ 03</span><h3>Software</h3><p>C++ · Python · Data pipelines &amp; analysis · Linux (ECE Lab / remote RDP workflow) · Git</p></div>
+      <div class="cap reveal" data-delay="1"><span class="n">/ 04</span><h3>VLSI &amp; Physical Design</h3><p>Cadence Virtuoso · Schematic &amp; layout · DRC / LVS / PEX · FreePDK standard cells (INVD1) · Sentaurus TCAD (lab)</p></div>
+      <div class="cap reveal" data-delay="2"><span class="n">/ 05</span><h3>Embedded &amp; Power</h3><p>ESP32 flight tracking · 400V battery / power systems · Avionics &amp; electrical bring-up · Bench debugging &amp; checkout</p></div>
+      <div class="cap reveal" data-delay="3"><span class="n">/ 06</span><h3>How I Work</h3><p>Measure first · Write it in my own words · Small, testable changes · Ask the data before defending a design</p></div>
     </div>
 
-    <div class="lang-strip">
-      <h3>LANGUAGE MIX — ESTIMATED ACROSS MY PROJECTS</h3>
+    <div class="lang-strip reveal">
+      <h3>LANGUAGE &amp; EDA MIX — ESTIMATED ACROSS MY PROJECTS</h3>
       <div class="lang-row">
         <div class="lang-item"><div class="bar"><i style="width:34%"></i></div><span class="nm">SystemVerilog</span> <span class="pc">34.0%</span></div>
         <div class="lang-item"><div class="bar"><i style="width:20%"></i></div><span class="nm">Python</span> <span class="pc">20.0%</span></div>
         <div class="lang-item"><div class="bar"><i style="width:18%"></i></div><span class="nm">Verilog</span> <span class="pc">18.0%</span></div>
         <div class="lang-item"><div class="bar"><i style="width:16%"></i></div><span class="nm">C++</span> <span class="pc">16.0%</span></div>
-        <div class="lang-item"><div class="bar"><i style="width:7%"></i></div><span class="nm">Cadence / SKILL</span> <span class="pc">7.0%</span></div>
+        <div class="lang-item"><div class="bar"><i style="width:7%"></i></div><span class="nm">Cadence / VLSI</span> <span class="pc">7.0%</span></div>
         <div class="lang-item"><div class="bar"><i style="width:5%"></i></div><span class="nm">Other</span> <span class="pc">5.0%</span></div>
       </div>
-      <p class="not-listed">Deliberately not listed: VHDL, Tcl, MATLAB, AutoCAD — not part of my toolkit, so they don’t go on the profile.</p>
+      <p class="not-listed">Deliberately not listed: VHDL, Tcl, MATLAB, AutoCAD — not part of my toolkit, so they don't go on the profile.</p>
     </div>
   </section>
 
   <!-- ================= ABOUT ================= -->
   <section id="about" class="wrap">
-    <div class="sec-top"><p class="idx"><span class="sq"></span> About</p></div>
-    <div class="sec-mid">
-      <p class="sec-label"><span class="sq"></span> The short version</p>
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> About</p></div>
+    <div class="sec-mid reveal" data-delay="1">
+      <h2 class="sec-label"><span class="sq"></span> <span data-scramble>The short version</span></h2>
     </div>
-    <p class="statement">I measure first. <span class="dim">At StarFive I threw away my own prefetch design when the numbers said it didn’t work — then built the arbiter that did. That loop,</span> measure → scrap → rebuild on evidence, <span class="dim">is how I engineer everything.</span></p>
+    <p class="statement reveal" data-delay="2">I measure first. <span class="dim">At StarFive I threw away my own prefetch design when the numbers said it didn't work — then built the arbiter that did. That loop,</span> measure → scrap → rebuild on evidence, <span class="dim">is how I engineer everything.</span></p>
 
-    <div class="numbers">
-      <div class="num"><b>20%</b><span>MMU SPEEDUP — TARGET MET AT STARFIVE</span></div>
-      <div class="num"><b>3rd</b><span>AIAA DESIGN BUILD FLY — WORLDWIDE</span></div>
-      <div class="num"><b>400V</b><span>PACCAR E-TRUCK POWER SYSTEMS</span></div>
-      <div class="num"><b>’27</b><span>UW ECE — CLASS OF JUNE 2027</span></div>
+    <div class="numbers reveal" data-delay="1">
+      <div class="num"><b data-target="20" data-prefix="+" data-suffix="%">0</b><span>MMU SPEEDUP — TARGET MET AT STARFIVE</span></div>
+      <div class="num"><b data-target="3" data-suffix="rd">0</b><span>AIAA DESIGN BUILD FLY — WORLDWIDE</span></div>
+      <div class="num"><b data-target="400" data-suffix="V">0</b><span>PACCAR E-TRUCK POWER SYSTEMS</span></div>
+      <div class="num"><b data-target="27" data-prefix="'">0</b><span>UW ECE — CLASS OF JUNE 2027</span></div>
     </div>
 
     <div class="fact-grid">
-      <div class="fact"><h3>Education</h3><p><strong>University of Washington</strong> — B.S. Electrical &amp; Computer Engineering, June 2027 · GPA 3.40. Coursework includes EE 476 (VLSI / CAD), EE 482, EE 496; Sentaurus TCAD and Cadence flows run on ECE Linux Lab machines.</p></div>
-      <div class="fact"><h3>Research interest</h3><p><strong>PNCEL (Prof. Ang Li)</strong> — attended group meetings from Oct 2026. Interested in CacheFlex: ISA / microarchitecture co-design that converts private L2 ways into a software-managed scratchpad for wide vector / SIMD — a natural extension of the MMU work at StarFive.</p></div>
-      <div class="fact"><h3>Currently</h3><p>EE 476 · EE 482 · EE 496 at UW — standard-cell design in Cadence on FreePDK (INVD1 schematic, layout, DRC / LVS / PEX) and reading CPU / MMU architecture papers.</p></div>
-      <div class="fact"><h3>Off the bench</h3><p>Basketball — No. 3 since high school. Moved Shanghai → Canada at 7; Seattle for UW, Singapore for StarFive. Teams: UW ECE, StarFive, PACCAR, AIAA DBF, Samsung, PNCEL.</p></div>
+      <div class="fact reveal" data-delay="1"><h3>Education</h3><p><strong>University of Washington</strong> — B.S. Electrical &amp; Computer Engineering, June 2027 · GPA 3.40. Coursework includes EE 476 (VLSI / CAD), EE 482, EE 496; Sentaurus TCAD and Cadence flows run on ECE Linux Lab machines.</p></div>
+      <div class="fact reveal" data-delay="2"><h3>Research interest</h3><p><strong>PNCEL (Prof. Ang Li)</strong> — attended group meetings from Oct 2026. Interested in CacheFlex: ISA / microarchitecture co-design that converts private L2 ways into a software-managed scratchpad for wide vector / SIMD — a natural extension of the MMU work at StarFive.</p></div>
+      <div class="fact reveal" data-delay="3"><h3>Currently</h3><p>EE 476 · EE 482 · EE 496 at UW — standard-cell design in Cadence on FreePDK (INVD1 schematic, layout, DRC / LVS / PEX) and reading CPU / MMU architecture papers.</p></div>
+      <div class="fact reveal" data-delay="4"><h3>Off the bench</h3><p>Basketball — No. 3 since high school. Moved Shanghai → Canada at 7; Seattle for UW, Singapore for StarFive. Teams: UW ECE, StarFive, PACCAR, AIAA DBF, Samsung, PNCEL.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= INTERACTIVE VLSI SILICON LAB (Arbiter Sim + Macmillan Tetris Homage) ================= -->
+  <section id="vlsi-lab" class="wrap vlsi-lab-sec">
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> {FIG. 02 — INTERACTIVE SILICON}</p></div>
+    <div class="sec-mid reveal" data-delay="1">
+      <h2 class="sec-label"><span class="sq"></span> <span data-scramble>VLSI Silicon Lab</span> <sup>(LIVE)</sup></h2>
+      <span class="sec-count">MMU Crossbar &amp; Standard-Cell P&amp;R</span>
+    </div>
+
+    <div class="vlsi-lab reveal" id="vlsiLab" data-mode="arbiter">
+      <div class="lab-bar">
+        <div class="lab-tabs" role="tablist" aria-label="Silicon Lab Mode">
+          <button type="button" class="lab-tab active" role="tab" aria-selected="true" data-lab-mode="arbiter">01 · MMU IID Arbiter Sim</button>
+          <button type="button" class="lab-tab" role="tab" aria-selected="false" data-lab-mode="tetris">02 · Standard-Cell P&amp;R (Tetris)</button>
+        </div>
+        <div class="lab-controls">
+          <button type="button" class="lab-btn accent iid-on" id="arbPolicyBtn" data-cursor="TOGGLE">Policy: IID-Recognizing (+20%)</button>
+          <button type="button" class="lab-btn" id="labBurstBtn" data-cursor="INJECT">Inject TLB Miss Burst</button>
+          <button type="button" class="lab-btn" id="labPauseBtn" data-cursor="CLK">Pause</button>
+        </div>
+      </div>
+
+      <div class="lab-stage">
+        <div class="lab-canvas-wrap">
+          <canvas id="labCanvas" width="920" height="400" aria-label="Interactive VLSI simulation canvas"></canvas>
+        </div>
+        <div class="lab-side">
+          <div>
+            <div class="lab-metric">
+              <div class="k" id="m1Key">Measured MMU Throughput</div>
+              <div class="v lime" id="m1Val">+20.4%</div>
+            </div>
+            <div class="lab-metric">
+              <div class="k" id="m2Key">Active Policy</div>
+              <div class="v" id="m2Val" style="font-size:18px">IID-Aware Crossbar</div>
+            </div>
+            <div class="lab-metric">
+              <div class="k" id="m3Key">PTW Queue / HoL Stalls</div>
+              <div class="v" id="m3Val" style="font-size:18px">0.4 cyc · Bypassed</div>
+            </div>
+            <div class="tetris-pad" aria-label="Standard-cell placement controls">
+              <button type="button" class="pad-btn" data-tkey="left">←</button>
+              <button type="button" class="pad-btn" data-tkey="rot">↻</button>
+              <button type="button" class="pad-btn" data-tkey="down">↓</button>
+              <button type="button" class="pad-btn" data-tkey="right">→</button>
+            </div>
+          </div>
+          <p class="lab-note" id="labNote">Toggle between the scrapped Round-Robin DTLB policy (head-of-line stalls on page-table walks) and the IID-recognizing arbiter that groups &amp; out-of-order routes independent instruction IDs across M2/M3 silicon tracks.</p>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ================= CONTACT ================= -->
   <section id="contact" class="wrap">
-    <div class="sec-top"><p class="idx"><span class="sq"></span> Contact</p></div>
-    <h2 class="contact-big"><a href="mailto:qgong3@uw.edu">Say<br/>Hell<span class="px">o</span></a></h2>
-    <div class="contact-row">
-      <a class="btn solid" href="mailto:qgong3@uw.edu">qgong3@uw.edu</a>
-      <button class="btn" id="copyEmail" type="button">Copy email</button>
-      <a class="btn" href="https://github.com/martingongg" target="_blank" rel="noopener">GitHub ↗</a>
+    <div class="sec-top reveal"><p class="idx"><span class="sq"></span> Contact</p></div>
+    <h2 class="contact-big reveal" data-delay="1"><a href="mailto:qgong3@uw.edu" class="magnetic" data-cursor="EMAIL ↗">Say<br/>Hell<span class="px" data-glyph="o">o</span></a></h2>
+    <div class="contact-row reveal" data-delay="2">
+      <a class="btn solid magnetic" href="mailto:qgong3@uw.edu" data-cursor="MAIL">qgong3@uw.edu</a>
+      <button class="btn magnetic" id="copyEmail" type="button" data-cursor="COPY">Copy email</button>
+      <a class="btn magnetic" href="https://github.com/martingongg" target="_blank" rel="noopener" data-cursor="GITHUB ↗">GitHub ↗</a>
       <span id="copyMsg" role="status"></span>
     </div>
-    <p style="color:var(--muted);max-width:56ch;margin:22px 0 0">Best way to reach me is email — I read every message about hardware roles, computer architecture, and UW ECE. Based in Seattle; open to relocating.</p>
+    <p class="reveal" data-delay="3" style="color:var(--muted);max-width:56ch;margin:22px 0 0">Best way to reach me is email — I read every message about hardware roles, computer architecture, VLSI, and UW ECE. Based in Seattle; open to relocating.</p>
 
-    <footer>
+    <!-- Macmillan-inspired GDSII / Process Layer Spec Swatches -->
+    <div class="layer-specs reveal" data-delay="3">
+      <span>GDSII LAYER PALETTE — CLICK SUBSTRATE TO INVERT WAFER</span>
+      <div class="swatches">
+        <button type="button" class="swatch" data-theme-pick="light"><i style="background:#c7c9ca"></i>L0 SUBSTRATE #C7C9CA</button>
+        <button type="button" class="swatch" data-theme-pick="wafer"><i style="background:#101215"></i>L1 WAFER #101215</button>
+        <span class="swatch"><i style="background:#4f7cff"></i>M1 #4F7CFF</span>
+        <span class="swatch"><i style="background:#ff5a4e"></i>POLY #FF5A4E</span>
+        <span class="swatch"><i style="background:#9a6bff"></i>M4 #9A6BFF</span>
+        <span class="swatch"><i style="background:#b7f224"></i>DOPED #B7F224</span>
+      </div>
+    </div>
+
+    <footer class="reveal" data-delay="4">
       <span>© 2026 Qijun Gong</span>
       <span>Seattle, WA</span>
-      <span>SystemVerilog · C++ · Python · Cadence · FPGA</span>
+      <span>SystemVerilog · VLSI · C++ · Python · Cadence · FPGA</span>
       <span class="r">martingongg.github.io</span>
     </footer>
   </section>
 </main>
 
 <script>
-var PROJECTS = [
-  {name:"lab4-pipelined-cpu", url:"https://github.com/martingongg/lab4-pipelined-cpu", desc:"Pipelined CPU implementation — Lab 4 processor design with datapath, control, and pipelining in hardware description code.", lang:"SystemVerilog", updated:"2026", tags:"cpu · pipelined · rtl · uw"},
-  {name:"flight-apt-display", url:"https://github.com/martingongg/flight-apt-display", desc:"Flight / airport display project — live flight information presented on a dedicated display.", lang:"Python", updated:"2026", tags:"flights · display · embedded"},
-  {name:"ee271-lab8", url:"https://github.com/martingongg/ee271-lab8", desc:"EE 271 digital design lab work at the University of Washington — Lab 8.", lang:"SystemVerilog", updated:"2026", tags:"uw · ee271 · digital-design"},
-  {name:"moomoo-swing-trader", url:"https://github.com/martingongg/moomoo-swing-trader", desc:"Swing-trading tool built around the moomoo platform — scanning, signals, and trade workflow in Python.", lang:"Python", updated:"2026", tags:"trading · python · moomoo"},
-  {name:"truth-stock-analyzer", url:"https://github.com/martingongg/truth-stock-analyzer", desc:"Stock analyzer that cross-checks claims and social posts against market data.", lang:"Python", updated:"2026", tags:"stocks · analysis · python"},
-  {name:"SGGuide", url:"https://github.com/martingongg/SGGuide", desc:"Singapore guide — places, food, and practical tips collected from time living and interning in Singapore.", lang:"JavaScript", updated:"2026", tags:"singapore · guide · travel"}
-];
-function pad(n){ return (n<10?"0":"")+n; }
-document.getElementById('projList').innerHTML = PROJECTS.map(function(r,i){
-  return '<li class="proj-row" data-name="'+r.name.toLowerCase()+'" data-lang="'+r.lang+'" data-desc="'+(r.desc+' '+r.tags).toLowerCase()+'">'
-    + '<a href="'+r.url+'" target="_blank" rel="noopener">'
-    + '<span class="p-num">/ '+pad(i+1)+'</span>'
-    + '<span class="p-name">'+r.name+'</span>'
-    + '<span class="p-arrow" aria-hidden="true">↗</span>'
-    + '<p class="p-desc">'+r.desc+'</p>'
-    + '<span class="p-meta"><span>'+r.lang+'</span><span>'+r.tags+'</span><span>Updated '+r.updated+'</span></span>'
-    + '</a></li>';
-}).join('');
+(function(){
+  'use strict';
 
-var activeFilter = 'all';
-function filterProjects(){
-  var q = (document.getElementById('projSearch').value || '').toLowerCase().trim();
-  var shown = 0;
-  document.querySelectorAll('#projList .proj-row').forEach(function(li){
-    var okQ = !q || li.getAttribute('data-name').indexOf(q) > -1 || li.getAttribute('data-desc').indexOf(q) > -1;
-    var okF = activeFilter === 'all' || li.getAttribute('data-lang') === activeFilter;
-    li.style.display = (okQ && okF) ? '' : 'none';
-    if (okQ && okF) shown++;
-  });
-  document.getElementById('projEmpty').hidden = shown > 0;
-}
-document.getElementById('projSearch').addEventListener('input', filterProjects);
-document.querySelectorAll('[data-filter]').forEach(function(ch){
-  ch.addEventListener('click', function(){
-    document.querySelectorAll('[data-filter]').forEach(function(c){ c.classList.remove('active'); });
-    ch.classList.add('active');
-    activeFilter = ch.getAttribute('data-filter');
-    filterProjects();
-  });
-});
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  var ambientPaused = false;
 
-/* copy email */
-document.getElementById('copyEmail').addEventListener('click', function(){
-  var msg = document.getElementById('copyMsg');
-  var done = function(){ msg.textContent = 'Copied — qgong3@uw.edu'; setTimeout(function(){ msg.textContent=''; }, 2400); };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText('qgong3@uw.edu').then(done).catch(done);
-  } else { done(); }
-});
+  /* ============================================================
+     1. VLSI BOOT CURTAIN LOADER
+     ============================================================ */
+  (function(){
+    var loader = document.getElementById('pageLoader');
+    var el = document.getElementById('loaderText');
+    if (!loader || !el || reducedMotion) return;
+    'MARTIN GONG'.split('').forEach(function(ch, i){
+      var s = document.createElement('span');
+      s.textContent = ch === ' ' ? '\u00A0' : ch;
+      s.style.animationDelay = (i * 0.045) + 's';
+      el.appendChild(s);
+    });
+    function finish(){
+      setTimeout(function(){ loader.classList.add('done'); }, 680);
+    }
+    if (document.readyState === 'complete') finish();
+    else window.addEventListener('load', finish, {once: true});
+    setTimeout(finish, 1800);
+  })();
+
+  /* ============================================================
+     2. SUBSTRATE / WAFER THEME & CLOCK MOTION TOGGLES
+     ============================================================ */
+  (function(){
+    var root = document.documentElement;
+    var themeBtn = document.getElementById('themeToggle');
+    var themeLbl = document.getElementById('themeLabel');
+    function setTheme(mode){
+      if (mode === 'wafer') {
+        root.setAttribute('data-theme', 'wafer');
+        themeLbl.textContent = 'CONCRETE LIGHT';
+      } else {
+        root.removeAttribute('data-theme');
+        themeLbl.textContent = 'SILICON DARK';
+      }
+      try { localStorage.setItem('mg-theme', mode); } catch(e){}
+    }
+    try {
+      if (localStorage.getItem('mg-theme') === 'wafer') setTheme('wafer');
+    } catch(e){}
+
+    themeBtn.addEventListener('click', function(){
+      setTheme(root.getAttribute('data-theme') === 'wafer' ? 'light' : 'wafer');
+    });
+    document.querySelectorAll('[data-theme-pick]').forEach(function(b){
+      b.addEventListener('click', function(){ setTheme(b.getAttribute('data-theme-pick')); });
+    });
+
+    var motionBtn = document.getElementById('motionToggle');
+    var motionLbl = document.getElementById('motionLabel');
+    motionBtn.addEventListener('click', function(){
+      ambientPaused = !ambientPaused;
+      document.body.classList.toggle('motion-paused', ambientPaused);
+      motionBtn.setAttribute('aria-pressed', String(ambientPaused));
+      motionLbl.textContent = ambientPaused ? 'CLK: HALT' : 'CLK: RUN';
+      document.querySelectorAll('svg.vlsi-hud, svg.f-overlay').forEach(function(svg){
+        if (svg.pauseAnimations && svg.unpauseAnimations) {
+          if (ambientPaused) svg.pauseAnimations(); else svg.unpauseAnimations();
+        }
+      });
+      window.dispatchEvent(new CustomEvent('mg-ambient-toggle'));
+    });
+  })();
+
+  /* ============================================================
+     3. COMPOSITOR-ONLY CUSTOM CURSOR (translate3d, contextual labels)
+     ============================================================ */
+  (function(){
+    if (coarsePointer) return;
+    var cursor = document.getElementById('cursor');
+    var label = document.getElementById('cursorLabel');
+    var dot = document.getElementById('cursorDot');
+    var mx = -100, my = -100, cx = -100, cy = -100;
+
+    window.addEventListener('pointermove', function(e){
+      mx = e.clientX; my = e.clientY;
+      dot.style.transform = 'translate3d(' + mx + 'px,' + my + 'px,0) translate(-50%,-50%)';
+    }, {passive: true});
+
+    function tick(){
+      cx += (mx - cx) * 0.18;
+      cy += (my - cy) * 0.18;
+      cursor.style.transform = 'translate3d(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px,0) translate(-50%,-50%)';
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    document.addEventListener('pointerover', function(e){
+      var probeZone = e.target.closest('[data-cursor-mode="probe"]');
+      var interactive = e.target.closest('a, button, .chip, input, .vlsi-block');
+      if (interactive) {
+        var txt = interactive.getAttribute('data-cursor') || (interactive.classList.contains('vlsi-block') ? 'INSPECT' : '');
+        cursor.classList.remove('probe');
+        cursor.classList.add('hover');
+        if (txt) {
+          label.textContent = txt;
+          cursor.classList.add('has-label');
+        } else {
+          label.textContent = '';
+          cursor.classList.remove('has-label');
+        }
+      } else if (probeZone) {
+        cursor.classList.remove('hover', 'has-label');
+        cursor.classList.add('probe');
+        label.textContent = '';
+      } else {
+        cursor.classList.remove('hover', 'has-label', 'probe');
+        label.textContent = '';
+      }
+    });
+  })();
+
+  /* ============================================================
+     4. SCROLL PROGRESS & HERO PARALLAX FALLBACKS
+     ============================================================ */
+  (function(){
+    if (!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'scroll()'))) {
+      var bar = document.getElementById('scrollProgress');
+      window.addEventListener('scroll', function(){
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        bar.style.transform = 'scaleX(' + (h > 0 ? window.scrollY / h : 0) + ')';
+      }, {passive: true});
+    }
+
+    if (!reducedMotion && !(window.CSS && CSS.supports && CSS.supports('(animation-timeline: view()) and (animation-range: entry)')) && 'IntersectionObserver' in window) {
+      var lockup = document.querySelector('.hero-lockup');
+      var l1 = document.querySelector('.hero-type .l1');
+      var l2 = document.querySelector('.hero-type .l2');
+      var diePar = document.querySelector('.hero-media-parallax');
+      if (lockup && l1 && l2 && diePar) {
+        var onHeroScroll = function(){
+          var rect = lockup.getBoundingClientRect();
+          var p = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height)));
+          l1.style.translate = (-28 * p).toFixed(1) + 'px ' + (-34 * p).toFixed(1) + 'px';
+          l2.style.translate = (32 * p).toFixed(1) + 'px ' + (-18 * p).toFixed(1) + 'px';
+          diePar.style.translate = '0px ' + (26 * p).toFixed(1) + 'px';
+        };
+        var pObs = new IntersectionObserver(function(entries){
+          if (entries[0].isIntersecting) window.addEventListener('scroll', onHeroScroll, {passive: true});
+          else window.removeEventListener('scroll', onHeroScroll);
+        }, {threshold: 0});
+        pObs.observe(lockup);
+      }
+    }
+  })();
+
+  /* ============================================================
+     5. SCROLLSPY SYNC & FALLBACK (CSS scroll-target-group + aria-current)
+     ============================================================ */
+  (function(){
+    var nav = document.getElementById('secNav');
+    var links = nav.querySelectorAll('a');
+    var supportsSTG = window.CSS && CSS.supports && CSS.supports('scroll-target-group: auto');
+
+    if (supportsSTG) {
+      var syncAria = function(){
+        var active = nav.querySelector('a:target-current');
+        links.forEach(function(l){
+          l.setAttribute('aria-current', l === active ? 'true' : 'false');
+        });
+      };
+      syncAria();
+      document.addEventListener('scrollend', syncAria, {passive: true});
+    } else if ('IntersectionObserver' in window) {
+      var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) {
+            var id = '#' + entry.target.id;
+            links.forEach(function(l){
+              var on = l.getAttribute('href') === id;
+              l.classList.toggle('target-current', on);
+              l.setAttribute('aria-current', on ? 'true' : 'false');
+            });
+          }
+        });
+      }, {rootMargin: '-45% 0px -45% 0px', threshold: 0});
+      document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+    }
+  })();
+
+  /* ============================================================
+     6. HERO VLSI DIE CAD PROBE, LAYER MODES & 3D TILT
+     ============================================================ */
+  (function(){
+    var media = document.getElementById('heroMedia');
+    var inner = document.getElementById('heroMediaInner');
+    var coords = document.getElementById('dieCoords');
+    var readout = document.getElementById('dieReadout');
+    var cadV = document.getElementById('cadV');
+    var cadH = document.getElementById('cadH');
+    var cadBox = document.getElementById('cadBox');
+    var blocks = media.querySelectorAll('.vlsi-block');
+    var metals = ['M1','M2','M3','M4','POLY','M5'];
+
+    document.querySelectorAll('[data-set-layer]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('[data-set-layer]').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        media.setAttribute('data-layer', btn.getAttribute('data-set-layer'));
+      });
+    });
+
+    blocks.forEach(function(blk){
+      blk.addEventListener('pointerenter', function(){
+        blocks.forEach(function(b){ b.classList.remove('active'); });
+        blk.classList.add('active');
+        readout.innerHTML = '<b>' + blk.getAttribute('data-block') + '</b> — ' + blk.getAttribute('data-spec');
+      });
+    });
+
+    if (!coarsePointer) {
+      media.addEventListener('pointermove', function(e){
+        var rect = media.getBoundingClientRect();
+        var nx = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        var ny = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        var vx = Math.round(nx * 1376);
+        var vy = Math.round(ny * 768);
+        cadV.setAttribute('x1', vx); cadV.setAttribute('x2', vx);
+        cadH.setAttribute('y1', vy); cadH.setAttribute('y2', vy);
+        cadBox.setAttribute('x', vx - 10); cadBox.setAttribute('y', vy - 10);
+        var mLayer = metals[(Math.floor(nx * 6) + Math.floor(ny * 4)) % metals.length];
+        coords.textContent = 'X: ' + String(vx).padStart(4,'0') + 'µm · Y: ' + String(vy).padStart(4,'0') + 'µm · ' + mLayer;
+        if (!reducedMotion) {
+          inner.style.transform = 'rotateY(' + ((nx - 0.5) * 4.5).toFixed(2) + 'deg) rotateX(' + ((0.5 - ny) * 4.5).toFixed(2) + 'deg) scale(1.012)';
+        }
+      }, {passive: true});
+
+      media.addEventListener('pointerleave', function(){
+        inner.style.transform = 'rotateY(0deg) rotateX(0deg) scale(1)';
+      });
+    }
+
+    // Pixel glyph micro-scramble on hover
+    var glyphs = ['0','1','Σ','Φ','Ω','λ','#','Δ'];
+    document.querySelectorAll('.px[data-glyph]').forEach(function(el){
+      var orig = el.getAttribute('data-glyph');
+      el.addEventListener('pointerenter', function(){
+        if (reducedMotion) return;
+        var step = 0;
+        var id = setInterval(function(){
+          el.textContent = step < 5 ? glyphs[Math.floor(Math.random() * glyphs.length)] : orig;
+          if (++step > 5) clearInterval(id);
+        }, 42);
+      });
+    });
+  })();
+
+  /* ============================================================
+     7. SAFE DOM-PRESERVING TEXT SCRAMBLE & REVEAL OBSERVERS
+     ============================================================ */
+  (function(){
+    var chars = '01/\\[]{}—=+*#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    function scrambleSpan(el){
+      if (reducedMotion) return;
+      var orig = el.textContent;
+      var len = orig.length;
+      var iter = 0;
+      function frame(){
+        var out = '';
+        for (var i = 0; i < len; i++) {
+          if (orig[i] === ' ') out += ' ';
+          else if (i < iter) out += orig[i];
+          else out += chars[(Math.random() * chars.length) | 0];
+        }
+        el.textContent = out;
+        iter += 0.45;
+        if (iter < len) requestAnimationFrame(frame);
+        else el.textContent = orig;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    var reveals = document.querySelectorAll('.reveal, .reveal-scale');
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(function(el){ el.classList.add('in'); });
+      document.querySelectorAll('.lang-item').forEach(function(el){ el.classList.add('in'); });
+      return;
+    }
+
+    var revObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          var sc = entry.target.querySelector('[data-scramble]');
+          if (sc) scrambleSpan(sc);
+          revObs.unobserve(entry.target);
+        }
+      });
+    }, {threshold: 0.12, rootMargin: '0px 0px -36px 0px'});
+    reveals.forEach(function(el){ revObs.observe(el); });
+
+    // Language bars stagger
+    var langItems = document.querySelectorAll('.lang-item');
+    if (langItems.length) {
+      var langObs = new IntersectionObserver(function(entries){
+        if (entries[0].isIntersecting) {
+          langItems.forEach(function(s, i){
+            setTimeout(function(){ s.classList.add('in'); }, reducedMotion ? 0 : i * 110);
+          });
+          langObs.disconnect();
+        }
+      }, {threshold: 0.25});
+      langObs.observe(langItems[0]);
+    }
+
+    // Animated counters
+    var nums = document.querySelectorAll('.num b[data-target]');
+    var numObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        numObs.unobserve(el);
+        var target = parseInt(el.dataset.target, 10);
+        var prefix = el.dataset.prefix || '';
+        var suffix = el.dataset.suffix || '';
+        if (reducedMotion) { el.textContent = prefix + target + suffix; return; }
+        var dur = 1350, t0 = performance.now();
+        function tick(now){
+          var p = Math.min((now - t0) / dur, 1);
+          var eased = 1 - Math.pow(1 - p, 5);
+          el.textContent = prefix + Math.round(eased * target) + suffix;
+          if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }, {threshold: 0.45});
+    nums.forEach(function(el){ numObs.observe(el); });
+  })();
+
+  /* ============================================================
+     8. MAGNETIC HOVER & VELOCITY-SENSITIVE MARQUEE
+     ============================================================ */
+  (function(){
+    if (!coarsePointer && !reducedMotion) {
+      document.querySelectorAll('.magnetic').forEach(function(el){
+        el.addEventListener('pointermove', function(e){
+          var r = el.getBoundingClientRect();
+          var x = (e.clientX - r.left - r.width / 2) * 0.26;
+          var y = (e.clientY - r.top - r.height / 2) * 0.26;
+          el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+        }, {passive: true});
+        el.addEventListener('pointerleave', function(){
+          el.style.transform = 'translate3d(0,0,0)';
+        });
+      });
+    }
+  })();
+
+  /* ============================================================
+     9. PROJECT INDEX + FLOATING SCHEMATIC PREVIEW CARD
+     ============================================================ */
+  var PROJECTS = [
+    {
+      name:"lab4-pipelined-cpu",
+      url:"https://github.com/martingongg/lab4-pipelined-cpu",
+      desc:"Pipelined CPU implementation — Lab 4 processor design with 5-stage datapath, hazard forwarding, and control in SystemVerilog.",
+      lang:"SystemVerilog", badge:"SV · VLSI", updated:"2026", tags:"cpu · pipelined · rtl · uw",
+      preview:'<img src="assets/vlsi-pipeline-macro.webp" alt="" loading="lazy"/>'
+    },
+    {
+      name:"flight-apt-display",
+      url:"https://github.com/martingongg/flight-apt-display",
+      desc:"Flight / airport display project — live flight telemetry and airspace arrivals presented on a dedicated hardware display.",
+      lang:"Python", badge:"PY · ESP32", updated:"2026", tags:"flights · display · embedded",
+      preview:'<svg viewBox="0 0 296 163"><rect width="296" height="163" fill="#0d1014"/><circle cx="148" cy="82" r="64" fill="none" stroke="#223026" stroke-width="1.5"/><circle cx="148" cy="82" r="40" fill="none" stroke="#223026" stroke-width="1.5"/><path d="M148 18 V146 M84 82 H212" stroke="#1e2922"/><path d="M148 82 L196 42" stroke="#b7f224" stroke-width="2"/><circle cx="176" cy="58" r="4" fill="#b7f224"/><circle cx="118" cy="66" r="3.5" fill="#4f7cff"/><circle cx="164" cy="108" r="3.5" fill="#ff5a4e"/><text x="14" y="24" fill="#b7f224" font-family="monospace" font-size="11">SEA · ADS-B LIVE</text><text x="14" y="148" fill="#8e96a0" font-family="monospace" font-size="10">FL340 · HDG 284° · 462KT</text></svg>'
+    },
+    {
+      name:"ee271-lab8",
+      url:"https://github.com/martingongg/ee271-lab8",
+      desc:"EE 271 digital design & FPGA prototyping work at the University of Washington — synchronous FSMs and ModelSim verification.",
+      lang:"SystemVerilog", badge:"SV · FPGA", updated:"2026", tags:"uw · ee271 · digital-design",
+      preview:'<svg viewBox="0 0 296 163"><rect width="296" height="163" fill="#0d1014"/><g fill="none" stroke-width="2"><path d="M16 42 H46 V24 H76 V42 H106 V24 H136 V42 H166 V24 H196 V42 H226 V24 H256 V42 H280" stroke="#b7f224"/><path d="M16 82 H66 V62 H146 V82 H186 V62 H256 V82 H280" stroke="#4f7cff"/><path d="M16 122 H96 V102 H196 V122 H236 V102 H280" stroke="#ff5a4e"/></g><text x="16" y="150" fill="#8e96a0" font-family="monospace" font-size="10">CLK · STATE[2:0] · VALID — PASS</text></svg>'
+    },
+    {
+      name:"moomoo-swing-trader",
+      url:"https://github.com/martingongg/moomoo-swing-trader",
+      desc:"Swing-trading system built around the OpenD / moomoo platform — multi-factor scanning, regime signals, and automated execution workflow.",
+      lang:"Python", badge:"PY · QUANT", updated:"2026", tags:"trading · python · moomoo",
+      preview:'<svg viewBox="0 0 296 163"><rect width="296" height="163" fill="#0d1014"/><path d="M16 126 L58 108 L96 116 L138 78 L174 88 L218 46 L256 54 L280 28" fill="none" stroke="#3ecf8e" stroke-width="2.5"/><path d="M16 134 Q140 105 280 58" fill="none" stroke="#4f7cff" stroke-dasharray="4 4" stroke-width="1.5"/><circle cx="138" cy="78" r="4.5" fill="#b7f224"/><circle cx="218" cy="46" r="4.5" fill="#b7f224"/><text x="16" y="24" fill="#3ecf8e" font-family="monospace" font-size="11">SIGNAL: BREAKOUT +2.4σ</text></svg>'
+    },
+    {
+      name:"truth-stock-analyzer",
+      url:"https://github.com/martingongg/truth-stock-analyzer",
+      desc:"Event-driven market analyzer that cross-checks public claims and social posts against actual timestamped equity tape.",
+      lang:"Python", badge:"PY · DATA", updated:"2026", tags:"stocks · analysis · python",
+      preview:'<svg viewBox="0 0 296 163"><rect width="296" height="163" fill="#0d1014"/><line x1="148" y1="16" x2="148" y2="142" stroke="#ff5a4e" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M18 96 L80 92 L148 98 L176 52 L224 64 L278 44" fill="none" stroke="#4f7cff" stroke-width="2.5"/><rect x="154" y="20" width="116" height="22" rx="3" fill="#1b1f26" stroke="#ff5a4e"/><text x="161" y="35" fill="#ff5a4e" font-family="monospace" font-size="10">POST Δt = +180s</text><text x="18" y="148" fill="#8e96a0" font-family="monospace" font-size="10">CLAIM VS TAPE CORRELATION</text></svg>'
+    },
+    {
+      name:"SGGuide",
+      url:"https://github.com/martingongg/SGGuide",
+      desc:"Singapore field guide — hawker centres, neighborhoods, and practical notes collected while living and interning at StarFive in Singapore.",
+      lang:"JavaScript", badge:"JS · MAP", updated:"2026", tags:"singapore · guide · travel",
+      preview:'<svg viewBox="0 0 296 163"><rect width="296" height="163" fill="#0d1014"/><path d="M44 92 L88 64 L152 56 L218 68 L252 88 L208 114 L136 118 L78 108 Z" fill="#182028" stroke="#4f7cff" stroke-width="2"/><circle cx="158" cy="102" r="5" fill="#b7f224"/><circle cx="122" cy="88" r="4" fill="#ff5a4e"/><circle cx="196" cy="84" r="4" fill="#9a6bff"/><text x="16" y="24" fill="#b7f224" font-family="monospace" font-size="11">1.3521° N · 103.8198° E</text><text x="16" y="148" fill="#8e96a0" font-family="monospace" font-size="10">ONE-NORTH · MAXWELL ·TIONG BAHRU</text></svg>'
+    }
+  ];
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  var projList = document.getElementById('projList');
+  projList.innerHTML = PROJECTS.map(function(r, i){
+    return '<li class="proj-row reveal" data-idx="' + i + '" data-delay="' + (i % 4 + 1) + '" data-name="' + r.name.toLowerCase() + '" data-lang="' + r.lang + '" data-desc="' + (r.desc + ' ' + r.tags).toLowerCase() + '">'
+      + '<a href="' + r.url + '" target="_blank" rel="noopener" data-cursor="REPO ↗">'
+      + '<span class="p-num">/ ' + pad(i + 1) + '</span>'
+      + '<span class="p-name">' + r.name + '</span>'
+      + '<span class="p-arrow" aria-hidden="true">↗</span>'
+      + '<p class="p-desc">' + r.desc + '</p>'
+      + '<span class="p-meta"><span>' + r.lang + '</span><span>' + r.tags + '</span><span>Updated ' + r.updated + '</span></span>'
+      + '</a></li>';
+  }).join('');
+
+  if ('IntersectionObserver' in window) {
+    var rowObs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add('in'); rowObs.unobserve(e.target); }
+      });
+    }, {threshold: 0.1});
+    projList.querySelectorAll('.proj-row').forEach(function(el){ rowObs.observe(el); });
+  } else {
+    projList.querySelectorAll('.proj-row').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // Floating hover preview physics
+  (function(){
+    if (coarsePointer) return;
+    var card = document.getElementById('projPreview');
+    var pName = document.getElementById('projPrevName');
+    var pLang = document.getElementById('projPrevLang');
+    var pBody = document.getElementById('projPrevBody');
+    var tx = 0, ty = 0, px = 0, py = 0, active = false;
+
+    projList.querySelectorAll('.proj-row').forEach(function(row){
+      row.addEventListener('pointerenter', function(){
+        var item = PROJECTS[+row.getAttribute('data-idx')];
+        if (!item) return;
+        pName.textContent = item.name;
+        pLang.textContent = item.badge;
+        pBody.innerHTML = item.preview;
+        active = true;
+        card.classList.add('visible');
+      });
+      row.addEventListener('pointerleave', function(){
+        active = false;
+        card.classList.remove('visible');
+      });
+    });
+
+    window.addEventListener('pointermove', function(e){
+      if (!active) return;
+      tx = Math.min(window.innerWidth - 316, e.clientX + 26);
+      ty = Math.max(16, Math.min(window.innerHeight - 210, e.clientY - 96));
+    }, {passive: true});
+
+    function animPreview(){
+      if (active) {
+        px += (tx - px) * 0.16;
+        py += (ty - py) * 0.16;
+        card.style.transform = 'translate3d(' + px.toFixed(1) + 'px,' + py.toFixed(1) + 'px,0) scale(1)';
+      }
+      requestAnimationFrame(animPreview);
+    }
+    requestAnimationFrame(animPreview);
+  })();
+
+  var activeFilter = 'all';
+  function filterProjects(){
+    var q = (document.getElementById('projSearch').value || '').toLowerCase().trim();
+    var shown = 0;
+    document.querySelectorAll('#projList .proj-row').forEach(function(li){
+      var okQ = !q || li.getAttribute('data-name').indexOf(q) > -1 || li.getAttribute('data-desc').indexOf(q) > -1;
+      var okF = activeFilter === 'all' || li.getAttribute('data-lang') === activeFilter;
+      li.style.display = (okQ && okF) ? '' : 'none';
+      if (okQ && okF) shown++;
+    });
+    document.getElementById('projEmpty').hidden = shown > 0;
+  }
+  document.getElementById('projSearch').addEventListener('input', filterProjects);
+  document.querySelectorAll('[data-filter]').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      document.querySelectorAll('[data-filter]').forEach(function(c){ c.classList.remove('active'); });
+      ch.classList.add('active');
+      activeFilter = ch.getAttribute('data-filter');
+      filterProjects();
+    });
+  });
+
+  /* ============================================================
+     10. INTERACTIVE VLSI SILICON LAB
+         - Tab 1: StarFive-inspired MMU IID-Recognizing Arbiter Sim
+         - Tab 2: Standard-Cell Place & Route Tetris (Macmillan Homage)
+         - Off-screen pause via contentvisibilityautostatechange + IO fallback
+     ============================================================ */
+  (function(){
+    var labSec = document.getElementById('vlsi-lab');
+    var labEl = document.getElementById('vlsiLab');
+    var canvas = document.getElementById('labCanvas');
+    var ctx = canvas.getContext('2d');
+    var policyBtn = document.getElementById('arbPolicyBtn');
+    var burstBtn = document.getElementById('labBurstBtn');
+    var pauseBtn = document.getElementById('labPauseBtn');
+    var m1Key = document.getElementById('m1Key'), m1Val = document.getElementById('m1Val');
+    var m2Key = document.getElementById('m2Key'), m2Val = document.getElementById('m2Val');
+    var m3Key = document.getElementById('m3Key'), m3Val = document.getElementById('m3Val');
+    var labNote = document.getElementById('labNote');
+
+    var mode = 'arbiter';
+    var iidAware = true;
+    var userPaused = reducedMotion;
+    var offscreenPaused = false;
+    var rafId = 0;
+
+    if (userPaused) pauseBtn.textContent = 'Resume';
+
+    /* ---- Arbiter simulation state ---- */
+    var IID_COLORS = ['#4f7cff', '#ff5a4e', '#9a6bff', '#3ecf8e'];
+    var packets = [];
+    var spawnTick = 0;
+    var retiredIID = 0, retiredRR = 0, simTicks = 1;
+
+    function spawnPacket(forceMiss){
+      var lane = (Math.random() * 4) | 0;
+      var isPtw = forceMiss || (lane === 1 && Math.random() < 0.55) || Math.random() < 0.22;
+      packets.push({
+        lane: lane,
+        iid: lane,
+        x: 92,
+        y: 76 + lane * 76,
+        outY: isPtw ? 290 : 126,
+        ptw: isPtw,
+        stall: (!iidAware && isPtw) ? 46 : 0,
+        speed: iidAware ? (isPtw ? 3.1 : 4.2) : 2.35
+      });
+    }
+    for (var k = 0; k < 6; k++) spawnPacket(false);
+
+    function stepArbiter(){
+      var W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#0b0d10';
+      ctx.fillRect(0, 0, W, H);
+
+      // Silicon Manhattan M1/M2 grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+      ctx.lineWidth = 1;
+      for (var gx = 0; gx < W; gx += 32) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke(); }
+      for (var gy = 0; gy < H; gy += 32) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke(); }
+
+      // 4 IID Request Lanes (left) -> Crossbar Arbiter (center) -> DTLB SRAM / PTW Banks (right)
+      ctx.font = '700 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+      for (var i = 0; i < 4; i++) {
+        var ly = 76 + i * 76;
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(86, ly); ctx.lineTo(370, ly); ctx.stroke();
+        ctx.fillStyle = '#171b22';
+        ctx.strokeStyle = IID_COLORS[i];
+        ctx.lineWidth = 1.8;
+        ctx.fillRect(18, ly - 18, 68, 36);
+        ctx.strokeRect(18, ly - 18, 68, 36);
+        ctx.fillStyle = '#e8eaed';
+        ctx.fillText('IID_0' + i, 28, ly + 4);
+      }
+
+      // Central Arbiter VLSI Macro
+      ctx.fillStyle = '#141820';
+      ctx.strokeStyle = iidAware ? '#b7f224' : '#ff5a4e';
+      ctx.lineWidth = 2.2;
+      ctx.fillRect(370, 48, 176, 304);
+      ctx.strokeRect(370, 48, 176, 304);
+      // Internal crossbar matrix lines
+      ctx.strokeStyle = iidAware ? 'rgba(183,242,36,0.22)' : 'rgba(255,90,78,0.22)';
+      ctx.lineWidth = 1;
+      for (var cx = 392; cx < 530; cx += 22) { ctx.beginPath(); ctx.moveTo(cx, 64); ctx.lineTo(cx, 336); ctx.stroke(); }
+      ctx.fillStyle = iidAware ? '#b7f224' : '#ff5a4e';
+      ctx.fillText(iidAware ? 'IID ARBITER' : 'ROUND-ROBIN', 404, 194);
+      ctx.fillStyle = '#9aa1ab';
+      ctx.fillText(iidAware ? 'OOO BYPASS ON' : 'HOL BLOCKING', 402, 214);
+
+      // Output Manhattan channels & Destination SRAM Macros
+      ctx.strokeStyle = '#4f7cff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(546, 126); ctx.lineTo(690, 126); ctx.stroke();
+      ctx.strokeStyle = '#9a6bff';
+      ctx.beginPath(); ctx.moveTo(546, 290); ctx.lineTo(690, 290); ctx.stroke();
+
+      // DTLB 6T-SRAM Macro
+      ctx.fillStyle = '#151922'; ctx.strokeStyle = '#4f7cff'; ctx.lineWidth = 2;
+      ctx.fillRect(690, 68, 206, 116); ctx.strokeRect(690, 68, 206, 116);
+      ctx.fillStyle = '#e8eaed'; ctx.fillText('L1 DTLB · 6T-SRAM', 722, 122);
+      ctx.fillStyle = '#8d95a0'; ctx.fillText('1-CYCLE FAST HIT', 728, 142);
+
+      // Page Table Walker Macro
+      ctx.fillStyle = '#151922'; ctx.strokeStyle = '#9a6bff';
+      ctx.fillRect(690, 232, 206, 116); ctx.strokeRect(690, 232, 206, 116);
+      ctx.fillStyle = '#e8eaed'; ctx.fillText('MMU PTW · L2 BANK', 720, 286);
+      ctx.fillStyle = '#8d95a0'; ctx.fillText('MULTI-CYCLE WALK', 728, 306);
+
+      // Advance & draw packets
+      simTicks++;
+      if (++spawnTick % (iidAware ? 15 : 21) === 0 && packets.length < 28) spawnPacket(false);
+
+      var holBlocked = false;
+      for (var p = 0; p < packets.length; p++) {
+        var pk = packets[p];
+        if (!iidAware && pk.x >= 352 && pk.x <= 372 && pk.stall > 0) {
+          pk.stall--;
+          holBlocked = true;
+        } else if (!iidAware && holBlocked && pk.x > 290 && pk.x < 368) {
+          // queued behind stalled head-of-line request
+        } else {
+          pk.x += pk.speed;
+          if (pk.x > 376 && pk.x < 540) {
+            pk.y += (pk.outY - pk.y) * 0.16;
+          }
+        }
+
+        ctx.fillStyle = IID_COLORS[pk.iid];
+        ctx.fillRect(pk.x - 8, pk.y - 6, 16, 12);
+        if (pk.ptw) {
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2;
+          ctx.strokeRect(pk.x - 8, pk.y - 6, 16, 12);
+        }
+        if (pk.x > 700) {
+          if (iidAware) retiredIID++; else retiredRR++;
+          packets.splice(p--, 1);
+        }
+      }
+    }
+
+    /* ---- Standard-Cell Place & Route Tetris (Macmillan Homage) ---- */
+    var COLS = 14, ROWS = 12, CELL = 28;
+    var board = [];
+    function resetBoard(){
+      board = [];
+      for (var r = 0; r < ROWS; r++) board.push(new Array(COLS).fill(null));
+    }
+    resetBoard();
+
+    var CELLS = [
+      {name:'INVD1', color:'#4f7cff', shape:[[1,1,1,1]]},
+      {name:'SRAM6T', color:'#b7f224', shape:[[1,1],[1,1]]},
+      {name:'NAND2', color:'#ff5a4e', shape:[[0,1,0],[1,1,1]]},
+      {name:'DFFQ', color:'#9a6bff', shape:[[1,0,0],[1,1,1]]},
+      {name:'MUX4', color:'#3ecf8e', shape:[[0,1,1],[1,1,0]]}
+    ];
+    var curPiece = null, dropTimer = 0, rowsRouted = 0, placedCells = 0;
+
+    function spawnPiece(){
+      var proto = CELLS[(Math.random() * CELLS.length) | 0];
+      curPiece = {
+        name: proto.name, color: proto.color,
+        shape: proto.shape.map(function(r){ return r.slice(); }),
+        x: 5, y: 0
+      };
+      if (collides(curPiece.x, curPiece.y, curPiece.shape)) {
+        resetBoard(); rowsRouted = 0; placedCells = 0;
+      }
+    }
+    function collides(nx, ny, sh){
+      for (var r = 0; r < sh.length; r++) {
+        for (var c = 0; c < sh[r].length; c++) {
+          if (!sh[r][c]) continue;
+          var x = nx + c, y = ny + r;
+          if (x < 0 || x >= COLS || y >= ROWS) return true;
+          if (y >= 0 && board[y][x]) return true;
+        }
+      }
+      return false;
+    }
+    function lockPiece(){
+      var sh = curPiece.shape;
+      for (var r = 0; r < sh.length; r++) {
+        for (var c = 0; c < sh[r].length; c++) {
+          if (sh[r][c] && curPiece.y + r >= 0) {
+            board[curPiece.y + r][curPiece.x + c] = {color: curPiece.color, name: curPiece.name};
+            placedCells++;
+          }
+        }
+      }
+      for (var row = ROWS - 1; row >= 0; row--) {
+        if (board[row].every(Boolean)) {
+          board.splice(row, 1);
+          board.unshift(new Array(COLS).fill(null));
+          rowsRouted++;
+          row++;
+        }
+      }
+      updateLabSidebar();
+      spawnPiece();
+    }
+    function movePiece(dx, dy){
+      if (!curPiece) spawnPiece();
+      if (!collides(curPiece.x + dx, curPiece.y + dy, curPiece.shape)) {
+        curPiece.x += dx; curPiece.y += dy; return true;
+      } else if (dy > 0) {
+        lockPiece();
+      }
+      return false;
+    }
+    function rotatePiece(){
+      if (!curPiece) return;
+      var sh = curPiece.shape;
+      var rot = sh[0].map(function(_, i){ return sh.map(function(row){ return row[i]; }).reverse(); });
+      if (!collides(curPiece.x, curPiece.y, rot)) curPiece.shape = rot;
+    }
+    spawnPiece();
+
+    function stepTetris(){
+      var W = canvas.width, H = canvas.height;
+      ctx.fillStyle = '#0b0d10'; ctx.fillRect(0, 0, W, H);
+      var ox = Math.floor((W - COLS * CELL) / 2), oy = Math.floor((H - ROWS * CELL) / 2);
+
+      // VDD / VSS standard-cell power rails
+      ctx.strokeStyle = 'rgba(79,124,255,0.22)'; ctx.lineWidth = 2;
+      for (var r = 0; r <= ROWS; r++) {
+        ctx.beginPath(); ctx.moveTo(ox - 24, oy + r * CELL); ctx.lineTo(ox + COLS * CELL + 24, oy + r * CELL); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+      for (var c = 0; c <= COLS; c++) {
+        ctx.beginPath(); ctx.moveTo(ox + c * CELL, oy); ctx.lineTo(ox + c * CELL, oy + ROWS * CELL); ctx.stroke();
+      }
+      ctx.strokeStyle = '#b7f224'; ctx.lineWidth = 1.8;
+      ctx.strokeRect(ox - 1, oy - 1, COLS * CELL + 2, ROWS * CELL + 2);
+
+      ctx.font = '700 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillStyle = '#8c939d';
+      ctx.fillText('FREEPDK45 PLACE & ROUTE DIE AREA (← → ↓ ↻)', ox, oy - 10);
+
+      if (++dropTimer % 28 === 0) movePiece(0, 1);
+
+      for (var br = 0; br < ROWS; br++) {
+        for (var bc = 0; bc < COLS; bc++) {
+          var cell = board[br][bc];
+          if (cell) {
+            ctx.fillStyle = cell.color;
+            ctx.fillRect(ox + bc * CELL + 2, oy + br * CELL + 2, CELL - 4, CELL - 4);
+            ctx.fillStyle = '#0b0d10';
+            ctx.fillRect(ox + bc * CELL + 10, oy + br * CELL + 10, 6, 6);
+          }
+        }
+      }
+      if (curPiece) {
+        ctx.fillStyle = curPiece.color;
+        for (var pr = 0; pr < curPiece.shape.length; pr++) {
+          for (var pc = 0; pc < curPiece.shape[pr].length; pc++) {
+            if (curPiece.shape[pr][pc]) {
+              var px = ox + (curPiece.x + pc) * CELL, py = oy + (curPiece.y + pr) * CELL;
+              ctx.fillRect(px + 2, py + 2, CELL - 4, CELL - 4);
+              ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+              ctx.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+            }
+          }
+        }
+        ctx.fillStyle = '#b7f224';
+        ctx.fillText('ACTIVE MACRO: ' + curPiece.name, ox + COLS * CELL + 34, oy + 26);
+      }
+    }
+
+    function updateLabSidebar(){
+      if (mode === 'arbiter') {
+        m1Key.textContent = 'Measured MMU Throughput';
+        m1Val.textContent = iidAware ? '+20.4%' : '+1.8%';
+        m1Val.classList.toggle('lime', iidAware);
+        m2Key.textContent = 'Active Policy';
+        m2Val.textContent = iidAware ? 'IID-Aware Crossbar' : 'Round-Robin (Scrapped)';
+        m3Key.textContent = 'PTW Queue / HoL Stalls';
+        m3Val.textContent = iidAware ? '0.4 cyc · Bypassed' : '6.8 cyc · HoL Blocked';
+        policyBtn.style.display = '';
+        burstBtn.textContent = 'Inject TLB Miss Burst';
+        labNote.textContent = 'Toggle between the scrapped Round-Robin DTLB policy (head-of-line stalls on page-table walks) and the IID-recognizing arbiter that routes independent instruction IDs across M2/M3 silicon tracks.';
+      } else {
+        var density = Math.min(99, Math.round((placedCells / (COLS * ROWS)) * 100));
+        m1Key.textContent = 'Power-Rail Rows Routed';
+        m1Val.textContent = String(rowsRouted).padStart(2, '0');
+        m1Val.classList.add('lime');
+        m2Key.textContent = 'Standard-Cell Density';
+        m2Val.textContent = density + '% DRC Clean';
+        m3Key.textContent = 'Controls';
+        m3Val.textContent = 'Arrows / WASD';
+        policyBtn.style.display = 'none';
+        burstBtn.textContent = 'Reset Wafer';
+        labNote.textContent = 'A nod to macmillan.studio’s Tetris easter egg — rebuilt as Cadence standard-cell Place & Route (INVD1, NAND2, DFFQ, MUX4, 6T-SRAM) between VDD/VSS rails.';
+      }
+    }
+
+    function loop(){
+      if (userPaused || offscreenPaused || ambientPaused) { rafId = 0; return; }
+      if (mode === 'arbiter') stepArbiter(); else stepTetris();
+      rafId = requestAnimationFrame(loop);
+    }
+    function ensureRunning(){
+      if (!rafId && !userPaused && !offscreenPaused && !ambientPaused) {
+        rafId = requestAnimationFrame(loop);
+      }
+    }
+    // Render one static initial frame even if reduced motion is active
+    stepArbiter();
+    ensureRunning();
+
+    // Mode tabs
+    document.querySelectorAll('[data-lab-mode]').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        document.querySelectorAll('[data-lab-mode]').forEach(function(t){
+          t.classList.remove('active'); t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active'); tab.setAttribute('aria-selected', 'true');
+        mode = tab.getAttribute('data-lab-mode');
+        labEl.setAttribute('data-mode', mode);
+        updateLabSidebar();
+        if (mode === 'arbiter') stepArbiter(); else stepTetris();
+        ensureRunning();
+      });
+    });
+
+    policyBtn.addEventListener('click', function(){
+      iidAware = !iidAware;
+      policyBtn.classList.toggle('iid-on', iidAware);
+      policyBtn.textContent = iidAware ? 'Policy: IID-Recognizing (+20%)' : 'Policy: Round-Robin (+1.8%)';
+      updateLabSidebar();
+    });
+
+    burstBtn.addEventListener('click', function(){
+      if (mode === 'arbiter') {
+        for (var b = 0; b < 6; b++) spawnPacket(true);
+      } else {
+        resetBoard(); rowsRouted = 0; placedCells = 0; spawnPiece(); updateLabSidebar(); stepTetris();
+      }
+    });
+
+    pauseBtn.addEventListener('click', function(){
+      userPaused = !userPaused;
+      pauseBtn.textContent = userPaused ? 'Resume' : 'Pause';
+      ensureRunning();
+    });
+
+    document.querySelectorAll('[data-tkey]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var k = b.getAttribute('data-tkey');
+        if (k === 'left') movePiece(-1, 0);
+        if (k === 'right') movePiece(1, 0);
+        if (k === 'down') movePiece(0, 1);
+        if (k === 'rot') rotatePiece();
+        stepTetris();
+      });
+    });
+
+    window.addEventListener('keydown', function(e){
+      if (mode !== 'tetris' || offscreenPaused) return;
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+      if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); movePiece(-1, 0); stepTetris(); }
+      else if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); movePiece(1, 0); stepTetris(); }
+      else if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); movePiece(0, 1); stepTetris(); }
+      else if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); rotatePiece(); stepTetris(); }
+    });
+
+    window.addEventListener('mg-ambient-toggle', ensureRunning);
+
+    // Efficient Background Processing: pause canvas simulation when off-screen
+    labSec.addEventListener('contentvisibilityautostatechange', function(event){
+      offscreenPaused = !!event.skipped;
+      if (!offscreenPaused) ensureRunning();
+    });
+    if (!('contentVisibility' in document.documentElement.style) && 'IntersectionObserver' in window) {
+      var visObs = new IntersectionObserver(function(entries){
+        offscreenPaused = !entries[0].isIntersecting;
+        if (!offscreenPaused) ensureRunning();
+      }, {rootMargin: '200px'});
+      visObs.observe(labSec);
+    }
+  })();
+
+  /* ============================================================
+     11. COPY EMAIL
+     ============================================================ */
+  document.getElementById('copyEmail').addEventListener('click', function(){
+    var msg = document.getElementById('copyMsg');
+    var done = function(){ msg.textContent = 'Copied — qgong3@uw.edu'; setTimeout(function(){ msg.textContent = ''; }, 2400); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText('qgong3@uw.edu').then(done).catch(done);
+    } else { done(); }
+  });
+})();
 </script>
 </body>
 </html>
